@@ -1,0 +1,24 @@
+rows=16
+columns=16
+tile_size=16
+text1 // messages
+text2
+text3
+text4
+% // to end messages
+"                " // map
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "

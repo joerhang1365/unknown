@@ -1,0 +1,22 @@
+rows=16
+columns=16
+tile_size=16
+this water is blocking the other side
+wonder if their is a way across
+%
+"        ^       "
+"             r  "
+"            r   "
+"                "
+"                "
+"wwwwwwwwwwwwwwww"
+"wwwwwwwwwwwwwwww"
+"                "
+"                "
+"  b             "
+"        t       "
+"                "
+"                "
+"                "
+"                "
+"        p       "

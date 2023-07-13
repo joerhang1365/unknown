@@ -1,0 +1,21 @@
+rows=16
+columns=16
+tile_size=16
+this way seems safe
+%
+"        ^       "
+"        g     r "
+"  l     g       "
+"  ll    g       "
+"        g       "
+"        g       "
+"        g       "
+"pgggggggt       "
+"                "
+"                "
+"           ll   "
+"                "
+"     r          "
+"                "
+"                "
+"                "
