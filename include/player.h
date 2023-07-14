@@ -15,12 +15,12 @@
 #define PLAYER_FRAMES 4
 #define FLOAT_AMPLITUDE 0.5
 
-enum ARROW_KEYS { NONE, UP, DOWN, LEFT, RIGHT };
-
 typedef struct
 {
   vector2 position;
   vector2 velocity;
+  float field_of_view;
+  float angle;
   float y_offset;
   float time;
   bool bob;
@@ -30,7 +30,7 @@ typedef struct
 
 void player_load(player *player, SDL_Renderer *renderer, char *source, int x, int y, unsigned int width, unsigned int height, unsigned int number_of_frames);
 void player_collision(player *player);
-void player_update(player *player, float delta_time, int key);
+void player_update(player *player, float delta_time, int arrow_key);
 void player_render(player player, SDL_Renderer *renderer);
 void player_unload(player *player);
 

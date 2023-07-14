@@ -5,6 +5,7 @@
 #include "text.h"
 #include "texture.h"
 #include "vector.h"
+#include "level.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <math.h>
@@ -50,8 +51,8 @@ int main()
 
   // key event initialization
   SDL_Event event;
-  enum ARROW_KEYS key;
-  bool x_key = false;
+  enum KEYS arrow_key;
+  enum KEYS event_key;
 
   // levels
   int level_index = 0;
@@ -64,12 +65,12 @@ int main()
     "levels/4.level"
   };
 
-  tilemap levels[TILEMAP_MAX];
-  tilemap_load(&levels[level_index], level_sources[level_index], renderer);
+  level levels[LEVEL_MAX];
+  level_load(&levels[level_index], level_sources[level_index], renderer);
 
   player the_player;
   player_load(&the_player, renderer, "images/player.png", 0, 0, 16, 16, PLAYER_FRAMES);
-  the_player.position = tilemap_get_position(levels[level_index], 'p');
+  the_player.position = level_get_position(levels[level_index], 'p');
 
   // loop
   bool run = true;
@@ -88,28 +89,30 @@ int main()
       } 
       else if (event.type == SDL_KEYDOWN) 
       {
-        switch (event.key.keysym.sym) 
+        if(event.key.keysym.sym == SDLK_UP)
         {
-          case SDLK_UP:
-            key = UP;
-            break;
-          case SDLK_DOWN:
-            key = DOWN;
-            break;
-          case SDLK_LEFT:
-            key = LEFT;
-            break;
-          case SDLK_RIGHT:
-            key = RIGHT;
-            break;
-          case SDLK_x:
-            x_key = true;
-            break;
+          arrow_key = UP;
         }
+        if(event.key.keysym.sym == SDLK_RIGHT)
+        {
+          arrow_key = RIGHT;
+        }
+        if(event.key.keysym.sym == SDLK_DOWN)
+        {
+          arrow_key = DOWN;
+        }
+        if(event.key.keysym.sym == SDLK_LEFT)
+        {
+          arrow_key = LEFT;
+        }
+        if(event.key.keysym.sym == SDLK_x)
+        {
+          event_key = X;
+        } 
       } 
       else if (event.type == SDL_KEYUP) 
       {
-        key = NONE;
+        arrow_key = NONE;
       }
     }
 
@@ -122,11 +125,11 @@ int main()
     {
       frame_time = 0;
 
-      tilemap_update_animation(&levels[level_index]);
-      player_update(&the_player, delta_time, key);
+      level_update_animation(&levels[level_index]);
+      player_update(&the_player, delta_time, arrow_key);
 
       // collision
-      bool is_collision = tilemap_is_collision(
+      bool is_collision = level_is_collision(
           levels[level_index], the_player.position.i,
           the_player.position.i + PLAYER_WIDTH * SCREEN_SCALE,
           the_player.position.j,
@@ -137,20 +140,20 @@ int main()
       }
 
       // sends player to next level
-      if (tilemap_next(levels[level_index],
+      if (level_is_next(levels[level_index],
                      the_player.position.i + (float)PLAYER_WIDTH / 2,
                      the_player.position.j + (float)PLAYER_HEIGHT / 2)) 
       {
-        tilemap_unload(&levels[level_index]);
+        level_unload(&levels[level_index]);
         level_index++;
-        tilemap_load(&levels[level_index], level_sources[level_index], renderer);
+        level_load(&levels[level_index], level_sources[level_index], renderer);
         levels[level_index].triggers[TEXT_TRIGGER] = false;
         player_load(&the_player, renderer, "images/player.png", 0, 0, 16, 16, PLAYER_FRAMES);
-        the_player.position = tilemap_get_position(levels[level_index], 'p');
+        the_player.position = level_get_position(levels[level_index], 'p');
       }
 
       // trips trigger if tile is t
-      if (tilemap_is_tile(
+      if (level_is_type(
               levels[level_index], the_player.position.i + (float)PLAYER_WIDTH / 2,
               the_player.position.j + (float)PLAYER_HEIGHT / 2, 't')) 
       {
@@ -163,7 +166,7 @@ int main()
       }
 
       // trips trigger if tile is b
-      if (tilemap_is_tile(
+      if (level_is_type(
               levels[level_index], the_player.position.i + (float)PLAYER_WIDTH / 2,
               (float)the_player.position.j + (float)PLAYER_HEIGHT / 2, 'b')) 
       {
@@ -189,15 +192,15 @@ int main()
                      "                "
                      "                "
                      "        p       ";
-        tilemap_change_map(&levels[3], map);
+        level_change_map(&levels[3], map);
       }
     }
 
     // change text
-    if (x_key) 
+    if (event_key == X) 
     {
-      tilemap_next_text(&levels[level_index]);
-      x_key = false;
+      level_next_text(&levels[level_index]);
+      event_key = NONE;
     }
 
     // render
@@ -206,15 +209,18 @@ int main()
     SDL_RenderClear(renderer);
 
     tilemap_render_map(levels[level_index], renderer);
-    tilemap_render_text(levels[level_index], renderer, font, color);
     player_render(the_player, renderer);
+    tilemap_render_text(levels[level_index], renderer, font, color);
 
     // pixel grid lines
-    SDL_SetRenderDrawColor(renderer, 1.0f, 1.0f, 1.0f, 1.0f);
-    for (int i = 0; i < SCREEN_HEIGHT * SCREEN_SCALE; i += SCREEN_SCALE) 
+    if(SCREEN_SCALE > 1)
     {
-      SDL_RenderDrawLine(renderer, 0, i, SCREEN_WIDTH * SCREEN_SCALE, i);
-      SDL_RenderDrawLine(renderer, i, 0, i, SCREEN_HEIGHT * SCREEN_SCALE);
+      SDL_SetRenderDrawColor(renderer, 1.0f, 1.0f, 1.0f, 1.0f);
+      for (int i = 0; i < SCREEN_HEIGHT * SCREEN_SCALE; i += SCREEN_SCALE) 
+      {
+        SDL_RenderDrawLine(renderer, 0, i, SCREEN_WIDTH * SCREEN_SCALE, i);
+        SDL_RenderDrawLine(renderer, i, 0, i, SCREEN_HEIGHT * SCREEN_SCALE);
+      }
     }
 
     // draw to screen
@@ -224,7 +230,7 @@ int main()
   // destroy components
   SDL_DestroyWindow(window);
   SDL_DestroyRenderer(renderer);
-  tilemap_unload(&levels[level_index]);
+  level_unload(&levels[level_index]);
   player_unload(&the_player);
   window = NULL;
   renderer = NULL;

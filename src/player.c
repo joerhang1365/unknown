@@ -4,6 +4,10 @@ void player_load(player *player, SDL_Renderer *renderer, char *source, int x, in
 {
   texture_create(&player->texture, source, renderer);
   animator_create(&player->animation, player->texture, width, height, number_of_frames);
+  player->position.i = x;
+  player->position.j = y;
+  player->field_of_view = 90;
+  player->angle = 0;
 }
 
 void player_collision(player *player) 
@@ -29,7 +33,7 @@ void player_collision(player *player)
   }
 }
 
-void player_update(player *player, float delta_time, int key) 
+void player_update(player *player, float delta_time, int arrow_key) 
 {
   // animation
   animator_update_clip(&player->animation, 60);
@@ -38,7 +42,7 @@ void player_update(player *player, float delta_time, int key)
   player->velocity.j = 0;
   player->velocity.i = 0;
 
-  switch (key) {
+  switch (arrow_key) {
   case UP:
     player->velocity.j = -1 * SCREEN_SCALE;
     break;
