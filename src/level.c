@@ -88,11 +88,13 @@ void level_load(level *level, char *source, SDL_Renderer *renderer)
   int rows = 0;
   int columns = 0;
   int tile_size = 0;
+  int mode = 0;
   char buffer[256];
 
   fscanf(in, "rows=%d\n", &rows);
   fscanf(in, "columns=%d\n", &columns);
   fscanf(in, "tile_size=%d\n", &tile_size);
+  fscanf(in, "mode=%d\n", &mode);
 
   // messages
   fgets(buffer, sizeof(buffer), in);
@@ -125,6 +127,7 @@ void level_load(level *level, char *source, SDL_Renderer *renderer)
   level->rows = rows;
   level->columns = columns;
   level->tile_size = tile_size;
+  level->mode = mode;
 
   // textures
   for(int i = 0; i < LEVEL_MAP; i++)

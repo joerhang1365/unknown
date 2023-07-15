@@ -1,5 +1,6 @@
 #include "animator.h"
 #include "constants.h"
+#include "raycast.h"
 #include "tilemap.h"
 #include "player.h"
 #include "text.h"
@@ -55,7 +56,7 @@ int main()
   enum KEYS event_key;
 
   // levels
-  int level_index = 0;
+  int level_index = 3;
   char *level_sources[] = 
   {
     "levels/0.level", 
@@ -71,6 +72,8 @@ int main()
   player the_player;
   player_load(&the_player, renderer, "images/player.png", 0, 0, 16, 16, PLAYER_FRAMES);
   the_player.position = level_get_position(levels[level_index], 'p');
+
+  int wall_heights[SCREEN_WIDTH];
 
   // loop
   bool run = true;
@@ -194,13 +197,18 @@ int main()
                      "        p       ";
         level_change_map(&levels[3], map);
       }
-    }
 
-    // change text
-    if (event_key == X) 
-    {
-      level_next_text(&levels[level_index]);
-      event_key = NONE;
+      // change text
+      if (event_key == X) 
+      {
+        level_next_text(&levels[level_index]);
+        event_key = NONE;
+      }
+
+      if(levels[level_index].mode == RAYCAST)
+      {
+        raycast_get_wall_heights(wall_heights, levels[level_index], the_player);
+      }
     }
 
     // render
@@ -208,9 +216,17 @@ int main()
     SDL_SetRenderDrawColor(renderer, 1.0f, 1.0f, 1.0f, 1.0f);
     SDL_RenderClear(renderer);
 
-    tilemap_render_map(levels[level_index], renderer);
-    player_render(the_player, renderer);
-    tilemap_render_text(levels[level_index], renderer, font, color);
+    if(levels[level_index].mode == TILEMAP)
+    {
+      tilemap_render_map(levels[level_index], renderer);
+      player_render(the_player, renderer);
+      tilemap_render_text(levels[level_index], renderer, font, color);
+    }
+
+    if(levels[level_index].mode == RAYCAST)
+    {
+      raycast_render_map(wall_heights, renderer);
+    }
 
     // pixel grid lines
     if(SCREEN_SCALE > 1)

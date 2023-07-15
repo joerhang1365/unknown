@@ -30,6 +30,7 @@ typedef struct
   int tile_size;
   int text_index;
   int text_size;
+  int mode;
   char message[LEVEL_TEXTS * LEVEL_MESSAGE];
   char map[LEVEL_MAP];
   bool triggers[LEVEL_TRIGGERS];
@@ -57,6 +58,7 @@ typedef struct
 
 enum TYPES { FLOWER, GRASS, WATER, BUTTON, ROCK, GRAVEL, WALL, FLOOR, UP_ARROW, RIGHT_ARROW, SPAWN, TEXT, TEXT_BOX, LARRY };
 enum TRIGGERS { BUTTON_TRIGGER, TEXT_TRIGGER };
+enum MODE { TILEMAP, RAYCAST };
 
 char level_get_type(level level, int column, int row);
 bool level_is_type(level level, float x, float y, char c);

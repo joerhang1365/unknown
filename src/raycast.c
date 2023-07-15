@@ -1,12 +1,13 @@
 #include "raycast.h"
+#include "constants.h"
 
-void raycast_get_wall_heights(int *wall_heights, int screen_width, int screen_height, char *map, player player)
+void raycast_get_wall_heights(int wall_heights[SCREEN_WIDTH], level level, player player)
 {
   int precision = 64;
-  float increment_angle = player.field_of_view / screen_width;
+  float increment_angle = player.field_of_view / SCREEN_WIDTH;
 
   float ray_angle = player.angle - player.field_of_view / 2;
-  for(int i = 0; i < screen_width; i++)
+  for(int i = 0; i < SCREEN_WIDTH; i++)
   {
     vector2 ray = { player.position.i, player.position.j };
 
@@ -18,18 +19,18 @@ void raycast_get_wall_heights(int *wall_heights, int screen_width, int screen_he
     {
       ray.i += ray_cos;
       ray.j += ray_sin;
-      wall = map[(int)(ray.i) * SCREEN_WIDTH + (int)(ray.j)];
+      wall = level.map[(int)(ray.i) * level.columns + (int)(ray.j)];
     }
 
     float distance = sqrt(pow(player.position.i - ray.i, 2)) + sqrt(pow(player.position.j - ray.j, 2));
 
-    wall_heights[i] = (float) screen_height / 2 / distance;
+    wall_heights[i] = (float) SCREEN_HEIGHT / 2 / distance;
 
     ray_angle += increment_angle;
   }
 }
 
-void raycast_render_map(int *wall_heights, SDL_Renderer *renderer)
+void raycast_render_map(int wall_heights[SCREEN_WIDTH], SDL_Renderer *renderer)
 {
   for(int i = 0; i < SCREEN_WIDTH; i++)
   {

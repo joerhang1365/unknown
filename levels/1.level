@@ -1,6 +1,7 @@
 rows=16
 columns=16
 tile_size=16
+mode=0
 press x to go to the next text
 :)
 %
