@@ -33,7 +33,7 @@ void player_collision(player *player)
   }
 }
 
-void player_update(player *player, float delta_time, int arrow_key) 
+void player_tilemap_update(player *player, float delta_time, int arrow_key) 
 {
   // animation
   animator_update_clip(&player->animation, 60);
@@ -96,6 +96,25 @@ void player_update(player *player, float delta_time, int arrow_key)
   player->position.j += player->velocity.j;
   player->position.i += player->velocity.i;
   player->bob = true;
+}
+
+void player_raycast_update(player *player, int arrow_key)
+{
+  switch (arrow_key) {
+  case UP:
+    player->velocity.j = -1 * SCREEN_SCALE;
+    break;
+  case DOWN:
+    player->velocity.j = 1 * SCREEN_SCALE;
+    break;
+  case LEFT:
+    player->angle--;
+    break;
+  case RIGHT:
+    player->angle++;
+    break;
+  }
+
 }
 
 void player_render(player player, SDL_Renderer *renderer) 

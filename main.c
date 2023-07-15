@@ -129,7 +129,16 @@ int main()
       frame_time = 0;
 
       level_update_animation(&levels[level_index]);
-      player_update(&the_player, delta_time, arrow_key);
+      if(levels[level_index].mode == TILEMAP)
+      {
+        player_tilemap_update(&the_player, delta_time, arrow_key);
+      }
+      else if (levels[level_index].mode == RAYCAST)
+      {
+        player_raycast_update(&the_player, arrow_key);
+        raycast_get_wall_heights(wall_heights, levels[level_index], the_player);
+      }
+
 
       // collision
       bool is_collision = level_is_collision(
@@ -204,11 +213,6 @@ int main()
         level_next_text(&levels[level_index]);
         event_key = NONE;
       }
-
-      if(levels[level_index].mode == RAYCAST)
-      {
-        raycast_get_wall_heights(wall_heights, levels[level_index], the_player);
-      }
     }
 
     // render
@@ -221,9 +225,8 @@ int main()
       tilemap_render_map(levels[level_index], renderer);
       player_render(the_player, renderer);
       tilemap_render_text(levels[level_index], renderer, font, color);
-    }
-
-    if(levels[level_index].mode == RAYCAST)
+    } 
+    else if(levels[level_index].mode == RAYCAST)
     {
       raycast_render_map(wall_heights, renderer);
     }

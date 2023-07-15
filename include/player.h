@@ -30,7 +30,8 @@ typedef struct
 
 void player_load(player *player, SDL_Renderer *renderer, char *source, int x, int y, unsigned int width, unsigned int height, unsigned int number_of_frames);
 void player_collision(player *player);
-void player_update(player *player, float delta_time, int arrow_key);
+void player_tilemap_update(player *player, float delta_time, int arrow_key);
+void player_raycast_update(player *player, int arrow_key);
 void player_render(player player, SDL_Renderer *renderer);
 void player_unload(player *player);
 
