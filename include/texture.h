@@ -26,5 +26,6 @@ typedef struct
 
 i32 texture_create(const char *source, texture_t *texture);
 i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max);
+void texture_destroy(texture_t texture);
 
 #endif

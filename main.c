@@ -1,4 +1,3 @@
-#include <SDL2/SDL_pixels.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,7 +9,7 @@
 
 struct 
 {
-  // SDL2 stuff
+  // SDL2 shit
   SDL_Window *window;
   SDL_Renderer *renderer;
   SDL_Texture *texture;
@@ -47,7 +46,7 @@ i32 state_load(const char *source)
     printf("error allocating memory to map\n");
     return 1;
   }
-  char buffer[64];
+  char buffer[128];
   i32 index = 0;
   i32 jndex = 0;
   while(index < state.columns * state.rows)
@@ -73,6 +72,7 @@ void state_destroy()
   SDL_DestroyRenderer(state.renderer);
   SDL_DestroyWindow(state.window);
   SDL_DestroyTexture(state.texture);
+  free(state.map);
   state.renderer = NULL;
   state.window = NULL;
   state.texture = NULL;
@@ -121,6 +121,8 @@ struct
   vec2 pos;
   vec2 dir;
 
+  texture_t texture;
+
 } player;
 
 
@@ -135,24 +137,24 @@ void player_load(f32 x, f32 y)
   player.dir.y = 0.0f;
 }
 
-void player_tilemap_movement(u32 key) 
+void player_movement() 
 {
   player.dir.x = 0.0f;
   player.dir.y = 0.0f;
 
-  if(key == LEFT) 
+  if(state.key == LEFT) 
   {
     player.dir.x = -1.0f;
   }
-  else if(key == RIGHT)
+  else if(state.key == RIGHT)
   {
     player.dir.x = 1.0f;
   }
-  else if(key == UP)
+  else if(state.key == UP)
   {
     player.dir.y = -1.0f;
   }
-  else if(key == DOWN)
+  else if(state.key == DOWN)
   {
     player.dir.y = 1.0f;
   }
@@ -161,6 +163,41 @@ void player_tilemap_movement(u32 key)
   player.pos.y += player.dir.y * PLAYER_SPEED;
 }
 
+void player_render()
+{
+  texture_add(
+      player.texture, 
+      player.pos.x, 
+      player.pos.y, 
+      state.pixels, 
+      SCREEN_WIDTH, 
+      SCREEN_WIDTH * SCREEN_HEIGHT);
+}
+
+texture_t textures[2];
+
+void map_render()
+{
+  texture_t type_txt;
+  for(i32 i = 0; i < state.columns; i++)
+  {
+    for(i32 j = 0; j < state.rows; j++)
+    {
+      switch(get_type(j, i))
+      {
+        case 't': type_txt = textures[TILE]; break;
+        default: type_txt = textures[BLANK]; break;
+      }
+      texture_add(
+          type_txt, 
+          j * state.tile_size,
+          i * state.tile_size, 
+          state.pixels, 
+          SCREEN_WIDTH, 
+          SCREEN_WIDTH * SCREEN_HEIGHT);
+    }
+  }
+}
 
 i32 main(i32 argc, char *argv[])
 {
@@ -202,12 +239,13 @@ i32 main(i32 argc, char *argv[])
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
-  
-  // player
+ 
+  // initialize
+  state_load("maps/test.map");
   player_load(0, 0);
-
-  texture_t player_tex;
-  texture_create("textures/player.txt", &player_tex);
+  texture_create("textures/player.txt", &player.texture);
+  texture_create("textures/tile.txt", &textures[TILE]);
+  texture_create("textures/blank.txt", &textures[BLANK]);
  
   f32 time = 0;
   f32 frame_time = 0;
@@ -246,7 +284,9 @@ i32 main(i32 argc, char *argv[])
     if (frame_time >= (f32)1 / FRAMERATE) 
     {
       frame_time = 0;
-      // update 
+      // update
+
+      player_movement();
 
     }
 
@@ -256,8 +296,9 @@ i32 main(i32 argc, char *argv[])
       state.pixels[i] = 0x0000;
     }
 
-    // render
-    texture_add(player_tex, 0, 0, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT);
+    // render 
+    map_render();
+    player_render();
 
     const i32 pitch = 2;
     SDL_UpdateTexture(
@@ -273,12 +314,12 @@ i32 main(i32 argc, char *argv[])
         NULL);
 
     // pixel grid lines
-    if(SCALE > 1)
+    SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
+    for (i32 i = 0; i < SCREEN_HEIGHT * SCALE; i += SCALE) 
     {
-      SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
-      for (i32 i = 0; i < SCREEN_HEIGHT * SCALE; i += SCALE) 
+      for(i32 j = 0; j < 3; j++)
       {
-        SDL_RenderDrawLine(state.renderer, 0, i, SCREEN_WIDTH * SCALE, i);
+        SDL_RenderDrawLine(state.renderer, 0, j + i, SCREEN_WIDTH * SCALE, j + i);
         SDL_RenderDrawLine(state.renderer, i, 0, i, SCREEN_HEIGHT * SCALE);
       }
     }
@@ -287,6 +328,8 @@ i32 main(i32 argc, char *argv[])
     SDL_RenderPresent(state.renderer);
   }
 
+  // destroy
+  texture_destroy(player.texture);
   state_destroy();
   SDL_Quit();
 
