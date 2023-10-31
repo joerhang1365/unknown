@@ -15,7 +15,7 @@ i32 texture_create(const char *source, texture_t *texture)
   fscanf(image, "height=%i\n", &height);
   fscanf(image, "bytes_per_pixel=%i\n", &bytes_per_pixel);
 
-  texture->pixels = (u32*) malloc(sizeof(u32) * width * height);
+  texture->pixels = (u16*) malloc(sizeof(u32) * width * height);
   if(texture->pixels == NULL)
   {
     printf("error allocating memory to pixels\n");
@@ -27,8 +27,7 @@ i32 texture_create(const char *source, texture_t *texture)
     for(i32 j = 0; j < width; j++)
     {
       fscanf(image, "%x ", &buffer);
-      texture->pixels[i * width + j] = buffer;
-      printf("%x", buffer);
+      texture->pixels[i * width + j] = (u16) buffer;
     }
     fscanf(image, "\n");
   }
@@ -42,7 +41,7 @@ i32 texture_create(const char *source, texture_t *texture)
   return success;
 }
 
-i32 texture_add(texture_t texture, const i32 x, const i32 y, u32 *pixels, const i32 pixels_width, const i32 pixels_max)
+i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
 {
   i32 overflow = 0;
   for(i32 i = 0; i < texture.height; i++)

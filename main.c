@@ -21,7 +21,7 @@ struct
   i32 tile_size;
   char *map;
 
-  u32 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
+  u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
 
   bool quit;
@@ -204,7 +204,7 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT);
   
   // player
-  player_load(10, 10);
+  player_load(0, 0);
 
   texture_t player_tex;
   texture_create("textures/player.txt", &player_tex);
@@ -253,13 +253,13 @@ i32 main(i32 argc, char *argv[])
     // clear screen
     for(i32 i = 0; i < SCREEN_WIDTH * SCREEN_WIDTH; i++)
     {
-      state.pixels[i] = 0x0000000;
+      state.pixels[i] = 0x0000;
     }
 
     // render
-    texture_add(player_tex, 100, 10, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT);
+    texture_add(player_tex, 0, 0, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    const i32 pitch = 4;
+    const i32 pitch = 2;
     SDL_UpdateTexture(
         state.texture, 
         NULL, 

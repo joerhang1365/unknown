@@ -8,7 +8,7 @@
 
 typedef struct
 {
-  u32 *pixels;
+  u16 *pixels;
   i32 width;
   i32 height;
   i32 bytes_per_pixel;
@@ -25,6 +25,6 @@ typedef struct
 #define ALL_COLORS_REQUIRED 0
 
 i32 texture_create(const char *source, texture_t *texture);
-i32 texture_add(texture_t texture, const i32 x, const i32 y, u32 *pixels, const i32 pixels_width, const i32 pixels_max);
+i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max);
 
 #endif
