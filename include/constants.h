@@ -8,6 +8,7 @@
 #define PI 3.1415926535
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X };
-enum TYPES { TILE, BLANK };
+enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT };
+enum ANIMAATIONS { GRASS_ANIM };
 
 #endif

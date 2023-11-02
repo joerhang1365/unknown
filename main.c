@@ -6,6 +6,7 @@
 #include "type.h"
 #include "vector.h"
 #include "texture.h"
+#include "animator.h"
 
 struct 
 {
@@ -122,7 +123,6 @@ struct
   vec2 dir;
 
   texture_t texture;
-
 } player;
 
 
@@ -174,27 +174,21 @@ void player_render()
       SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
-texture_t textures[2];
+texture_t textures[3];
+animator_t animations[1];
 
 void map_render()
 {
-  texture_t type_txt;
   for(i32 i = 0; i < state.columns; i++)
   {
     for(i32 j = 0; j < state.rows; j++)
     {
       switch(get_type(j, i))
       {
-        case 't': type_txt = textures[TILE]; break;
-        default: type_txt = textures[BLANK]; break;
+        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case 'f': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_HEIGHT, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
       }
-      texture_add(
-          type_txt, 
-          j * state.tile_size,
-          i * state.tile_size, 
-          state.pixels, 
-          SCREEN_WIDTH, 
-          SCREEN_WIDTH * SCREEN_HEIGHT);
     }
   }
 }
@@ -243,9 +237,15 @@ i32 main(i32 argc, char *argv[])
   // initialize
   state_load("maps/test.map");
   player_load(0, 0);
+
+  // textures
   texture_create("textures/player.txt", &player.texture);
-  texture_create("textures/tile.txt", &textures[TILE]);
-  texture_create("textures/blank.txt", &textures[BLANK]);
+  texture_create("textures/tile.txt", &textures[TILE_TXT]);
+  texture_create("textures/blank.txt", &textures[BLANK_TXT]);
+  texture_create("textures/grass.txt", &textures[GRASS_TXT]);
+
+  // animations
+  animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
  
   f32 time = 0;
   f32 frame_time = 0;
@@ -288,6 +288,7 @@ i32 main(i32 argc, char *argv[])
 
       player_movement();
 
+      animator_update(&animations[GRASS_ANIM], 16);
     }
 
     // clear screen
