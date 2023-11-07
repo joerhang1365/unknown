@@ -7,6 +7,7 @@
 #include "vector.h"
 #include "texture.h"
 #include "animator.h"
+#include "text.h"
 
 struct 
 {
@@ -20,6 +21,8 @@ struct
   i32 rows;
   i32 tile_size;
   char *map;
+  i32 text_size;
+  text_t *texts;
 
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
@@ -62,6 +65,27 @@ i32 state_load(const char *source)
     }
   }
   state.map[index - 1] = '\0';
+
+  // text
+  fscanf(in, "text_size=%d\n", &state.text_size);
+  state.texts = malloc(sizeof(text_t) * state.text_size);
+  if(state.texts == NULL)
+  {
+    printf("failed to allocate memory to texts\n");
+    return 1;
+  }
+
+  for(i32 i = 0; i < state.text_size; i++)
+  {
+    char buffer;
+    i32 length = 0;
+    while((buffer = fgetc(in)) != ';')
+    {
+      state.texts[i].message[length] = buffer;
+      length++;
+    }
+    state.texts[i].length = length;
+  }
 
   fclose(in);
 
@@ -174,8 +198,8 @@ void player_render()
       SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
-texture_t textures[3];
-animator_t animations[1];
+texture_t textures[4];
+animator_t animations[2];
 
 void map_render()
 {
@@ -185,9 +209,13 @@ void map_render()
     {
       switch(get_type(j, i))
       {
-        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'f': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_HEIGHT, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); 
+                   break;
+        case 'g': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
+                  break;
+        case 'f': animator_add(animations[FLOWER_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); 
+                 break;
       }
     }
   }
@@ -237,15 +265,19 @@ i32 main(i32 argc, char *argv[])
   // initialize
   state_load("maps/test.map");
   player_load(0, 0);
+  texture_t text_txt;
+  texture_create("textures/alphabet.txt", &text_txt);
 
   // textures
   texture_create("textures/player.txt", &player.texture);
   texture_create("textures/tile.txt", &textures[TILE_TXT]);
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
   texture_create("textures/grass.txt", &textures[GRASS_TXT]);
+  texture_create("textures/flower.txt", &textures[FLOWER_TXT]);
 
   // animations
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
+  animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
  
   f32 time = 0;
   f32 frame_time = 0;
@@ -289,6 +321,7 @@ i32 main(i32 argc, char *argv[])
       player_movement();
 
       animator_update(&animations[GRASS_ANIM], 16);
+      animator_update(&animations[FLOWER_ANIM], 32);
     }
 
     // clear screen
@@ -300,7 +333,7 @@ i32 main(i32 argc, char *argv[])
     // render 
     map_render();
     player_render();
-
+    text_render(state.texts[0], text_txt, player.pos.x - 4, player.pos.y - 8, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
     const i32 pitch = 2;
     SDL_UpdateTexture(
         state.texture, 
