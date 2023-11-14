@@ -16,13 +16,18 @@ struct
   SDL_Renderer *renderer;
   SDL_Texture *texture;
 
-  // levels
+  // map
   i32 columns;
   i32 rows;
   i32 tile_size;
   char *map;
+  i32 map_index;
+
+  // text
   i32 text_size;
   text_t *texts;
+  i32 text_index;
+  bool text_show;
 
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
@@ -67,6 +72,8 @@ i32 state_load(const char *source)
   state.map[index - 1] = '\0';
 
   // text
+  state.text_index = 0;
+  state.text_show = false;
   fscanf(in, "text_size=%d\n", &state.text_size);
   state.texts = malloc(sizeof(text_t) * state.text_size);
   if(state.texts == NULL)
@@ -85,6 +92,7 @@ i32 state_load(const char *source)
       length++;
     }
     state.texts[i].length = length;
+    buffer = fgetc(in);
   }
 
   fclose(in);
@@ -150,13 +158,14 @@ struct
 } player;
 
 
-void player_load(f32 x, f32 y)
+void player_load()
 {
   player.width = PLAYER_WIDTH;
   player.height = PLAYER_HEIGHT;
   player.offset = 0;
-  player.pos.x = x;
-  player.pos.y = y;
+  veci2 pos = get_position('p');
+  player.pos.x = pos.x * state.tile_size;
+  player.pos.y = pos.y * state.tile_size;
   player.dir.x = -1.0f;
   player.dir.y = 0.0f;
 }
@@ -198,7 +207,7 @@ void player_render()
       SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
-texture_t textures[4];
+texture_t textures[7];
 animator_t animations[2];
 
 void map_render()
@@ -209,13 +218,15 @@ void map_render()
     {
       switch(get_type(j, i))
       {
-        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); 
-                   break;
-        case 'g': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
-                  break;
+        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case 'g': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
         case 'f': animator_add(animations[FLOWER_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); 
-                 break;
+        case 'T': texture_add(textures[TEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case '>': texture_add(textures[NEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case 'p': texture_add(textures[P_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+
+
+        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
       }
     }
   }
@@ -263,8 +274,13 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT);
  
   // initialize
+  char *map_src[] =
+  {
+    "maps/test.map",
+    "maps/start.map"
+  };
   state_load("maps/test.map");
-  player_load(0, 0);
+  player_load();
   texture_t text_txt;
   texture_create("textures/alphabet.txt", &text_txt);
 
@@ -274,6 +290,9 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
   texture_create("textures/grass.txt", &textures[GRASS_TXT]);
   texture_create("textures/flower.txt", &textures[FLOWER_TXT]);
+  texture_create("textures/text.txt", &textures[TEXT_TXT]);
+  texture_create("textures/next.txt", &textures[NEXT_TXT]);
+  texture_create("textures/p.txt", &textures[P_TXT]);
 
   // animations
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
@@ -316,12 +335,36 @@ i32 main(i32 argc, char *argv[])
     if (frame_time >= (f32)1 / FRAMERATE) 
     {
       frame_time = 0;
+      
       // update
-
       player_movement();
 
       animator_update(&animations[GRASS_ANIM], 16);
       animator_update(&animations[FLOWER_ANIM], 32);
+
+      // text logic
+      if(is_type(player.pos.x, player.pos.y, 'T'))
+      {
+        state.text_show = true;
+        if(state.key == X && state.text_index < state.text_size - 1)
+        {
+          state.text_index++;
+          state.key = NONE;
+        }
+      }
+      else
+      {
+        state.text_show = false;
+        state.text_index = 0;
+      }
+
+      // next logic
+      if(is_type(player.pos.x, player.pos.y, '>'))
+      {
+        state.map_index++;
+        state_load(map_src[state.map_index]);
+        player_load();
+      }
     }
 
     // clear screen
@@ -333,7 +376,12 @@ i32 main(i32 argc, char *argv[])
     // render 
     map_render();
     player_render();
-    text_render(state.texts[0], text_txt, player.pos.x - 4, player.pos.y - 8, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
+
+    if(state.text_show == true)
+    {
+      text_render(state.texts[state.text_index], text_txt, 32, 98, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
+    }
+
     const i32 pitch = 2;
     SDL_UpdateTexture(
         state.texture, 
@@ -351,10 +399,9 @@ i32 main(i32 argc, char *argv[])
     SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
     for (i32 i = 0; i < SCREEN_HEIGHT * SCALE; i += SCALE) 
     {
-      for(i32 j = 0; j < 3; j++)
+      for(i32 j = 0; j < 4; j++)
       {
         SDL_RenderDrawLine(state.renderer, 0, j + i, SCREEN_WIDTH * SCALE, j + i);
-        SDL_RenderDrawLine(state.renderer, i, 0, i, SCREEN_HEIGHT * SCALE);
       }
     }
 
@@ -364,6 +411,13 @@ i32 main(i32 argc, char *argv[])
 
   // destroy
   texture_destroy(player.texture);
+  texture_destroy(textures[TILE_TXT]);
+  texture_destroy(textures[BLANK_TXT]);
+  texture_destroy(textures[GRASS_TXT]);
+  texture_destroy(textures[FLOWER_TXT]);
+  texture_destroy(textures[TEXT_TXT]);
+  texture_destroy(textures[NEXT_TXT]);
+  texture_destroy(textures[P_TXT]);
   state_destroy();
   SDL_Quit();
 

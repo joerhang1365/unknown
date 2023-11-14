@@ -50,7 +50,7 @@ i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const 
     {
       const i32 pixel_index = (i + y) * pixels_width + j + x;
       overflow = pixel_index > pixels_max;
-      if(pixel_index >= 0 && pixel_index < pixels_max && (j + x) >= 0 && (j + x) < pixels_width)
+      if(pixel_index >= 0 && pixel_index < pixels_max && (j + x) >= 0 && (j + x) < pixels_width && texture.pixels[i * texture.width + j] != 0)
       {
         pixels[pixel_index] = texture.pixels[i * texture.width + j];
       }
