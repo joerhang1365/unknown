@@ -4,6 +4,9 @@
 #include "type.h"
 #include "texture.h"
 
+#define CHAR_HEIGHT 6
+#define CHAR_WIDTH 4
+
 typedef struct
 {
   char message[128];

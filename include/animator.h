@@ -4,6 +4,8 @@
 #include "type.h"
 #include "texture.h"
 
+#define ANIMATION_MAX 2
+
 typedef struct
 {
   texture_t texture_map;
@@ -12,6 +14,8 @@ typedef struct
   u32 number_of_frames;
   u32 frame;
 } animator_t;
+
+enum ANIMATIONS { GRASS_ANIM, FLOWER_ANIM };
 
 void animator_create(animator_t *animator, const texture_t texture_map, const i32 width, const i32 height, const u32 number_of_frames);
 void animator_set_index(animator_t *animator, const u32 frame);

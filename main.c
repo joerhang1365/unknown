@@ -207,8 +207,8 @@ void player_render()
       SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
-texture_t textures[7];
-animator_t animations[2];
+animator_t animations[ANIMATION_MAX];
+texture_t textures[TEXTURE_MAX];
 
 void map_render()
 {
@@ -224,8 +224,7 @@ void map_render()
         case 'T': texture_add(textures[TEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
         case '>': texture_add(textures[NEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
         case 'p': texture_add(textures[P_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-
-
+        case 'R': texture_add(textures[ROCK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
         default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
       }
     }
@@ -277,7 +276,8 @@ i32 main(i32 argc, char *argv[])
   char *map_src[] =
   {
     "maps/test.map",
-    "maps/start.map"
+    "maps/start.map",
+    "maps/flower.map"
   };
   state_load("maps/test.map");
   player_load();
@@ -293,6 +293,7 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/text.txt", &textures[TEXT_TXT]);
   texture_create("textures/next.txt", &textures[NEXT_TXT]);
   texture_create("textures/p.txt", &textures[P_TXT]);
+  texture_create("textures/rock.txt", &textures[ROCK_TXT]);
 
   // animations
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
@@ -381,7 +382,7 @@ i32 main(i32 argc, char *argv[])
     {
       text_render(state.texts[state.text_index], text_txt, 32, 98, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
     }
-
+ 
     const i32 pitch = 2;
     SDL_UpdateTexture(
         state.texture, 
@@ -397,14 +398,14 @@ i32 main(i32 argc, char *argv[])
 
     // pixel grid lines
     SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
-    for (i32 i = 0; i < SCREEN_HEIGHT * SCALE; i += SCALE) 
+    for (i32 i = 0; i < SCREEN_HEIGHT; i++) 
     {
-      for(i32 j = 0; j < 4; j++)
+      for(i32 j = 0; j < SCALE / 2; j++)
       {
-        SDL_RenderDrawLine(state.renderer, 0, j + i, SCREEN_WIDTH * SCALE, j + i);
+        SDL_RenderDrawLine(state.renderer, 0, i * SCALE + j, SCREEN_WIDTH * SCALE, i * SCALE + j);
       }
     }
-
+ 
     // draw to screen
     SDL_RenderPresent(state.renderer);
   }
@@ -418,6 +419,7 @@ i32 main(i32 argc, char *argv[])
   texture_destroy(textures[TEXT_TXT]);
   texture_destroy(textures[NEXT_TXT]);
   texture_destroy(textures[P_TXT]);
+  texture_destroy(textures[ROCK_TXT]);
   state_destroy();
   SDL_Quit();
 

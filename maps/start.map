@@ -8,7 +8,7 @@ tile_size=8
 "                "
 "                "
 "                "
-"p      T        "
+"p      T       >"
 "                "
 "                "
 "                "
@@ -18,5 +18,6 @@ tile_size=8
 "                "
 "                "
 text_size=2
-press x to go to\next text;
+press x to go to
+next text;
 wowie;

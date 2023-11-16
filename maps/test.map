@@ -4,7 +4,7 @@ tile_size=8
 "                "
 "                "
 "                "
-"     f      T   "
+"                "
 "                "
 "                "
 "      ttt       "
@@ -12,10 +12,9 @@ tile_size=8
 "      ttt       "
 "                "
 "                "
-"          g     "
 "                "
 "                "
 "                "
 "                "
-text_size=1
-hello;
+"                "
+text_size=0

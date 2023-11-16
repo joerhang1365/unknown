@@ -33,11 +33,16 @@ i32 animator_add(animator_t animator, const i32 x, const i32 y, u16 *pixels, con
   {
     for(i32 j = 0; j < animator.width; j++)
     {
-      const i32 pixel_index = (i + y) * pixels_width + j + x; 
+      const i32 pixel_index = (i + y) * pixels_width + j + x;
+      const i32 animator_txt_index = i * animator.texture_map.width + j + animator.width * animator.index;
         
-      if(pixel_index >= 0 && pixel_index < pixels_max && (j + x) >= 0 && (j + x) < pixels_width)
+      if(pixel_index >= 0 && 
+         pixel_index < pixels_max && 
+         (j + x) >= 0 && 
+         (j + x) < pixels_width &&
+          animator.texture_map.pixels[animator_txt_index] != 0x0000)
       {
-        pixels[pixel_index] = animator.texture_map.pixels[i * animator.texture_map.width + j + animator.width * animator.index];
+        pixels[pixel_index] = animator.texture_map.pixels[animator_txt_index];
       }
     }
   }
