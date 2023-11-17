@@ -142,8 +142,8 @@ bool is_type(const f32 x, const f32 y, const char c)
   return (tile == c);
 }
 
-#define PLAYER_WIDTH 16
-#define PLAYER_HEIGHT 16
+#define PLAYER_WIDTH 8
+#define PLAYER_HEIGHT 8
 #define PLAYER_SPEED 2
 
 struct
@@ -152,7 +152,7 @@ struct
   i32 height;
   i32 offset;
   vec2 pos;
-  vec2 dir;
+  veci2 dir;
 
   texture_t texture;
 } player;
@@ -166,34 +166,49 @@ void player_load()
   veci2 pos = get_position('p');
   player.pos.x = pos.x * state.tile_size;
   player.pos.y = pos.y * state.tile_size;
-  player.dir.x = -1.0f;
-  player.dir.y = 0.0f;
+  player.dir.x = -1;
+  player.dir.y = 0;
 }
 
 void player_movement() 
 {
-  player.dir.x = 0.0f;
-  player.dir.y = 0.0f;
+  player.dir.x = 0;
+  player.dir.y = 0;
 
   if(state.key == LEFT) 
   {
-    player.dir.x = -1.0f;
+    player.dir.x = -1;
   }
   else if(state.key == RIGHT)
   {
-    player.dir.x = 1.0f;
+    player.dir.x = 1;
   }
   else if(state.key == UP)
   {
-    player.dir.y = -1.0f;
+    player.dir.y = -1;
   }
   else if(state.key == DOWN)
   {
-    player.dir.y = 1.0f;
+    player.dir.y = 1;
   }
 
   player.pos.x += player.dir.x * PLAYER_SPEED;
   player.pos.y += player.dir.y * PLAYER_SPEED;
+}
+
+bool player_is_touch(char c)
+{
+  return 
+    is_type(player.pos.x, player.pos.y, c) ||
+    is_type(player.pos.x + player.width, player.pos.y, c) ||
+    is_type(player.pos.x, player.pos.y + player.height, c) ||
+    is_type(player.pos.x + player.width, player.pos.y + player.height, c);
+}
+
+void player_collision()
+{
+  player.pos.x -= player.dir.x * PLAYER_SPEED;
+  player.pos.y -= player.dir.y * PLAYER_SPEED;
 }
 
 void player_render()
@@ -343,8 +358,14 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[GRASS_ANIM], 16);
       animator_update(&animations[FLOWER_ANIM], 32);
 
+      // collison
+      if(player_is_touch('R'))
+      {
+        player_collision();
+      }
+
       // text logic
-      if(is_type(player.pos.x, player.pos.y, 'T'))
+      if(player_is_touch('T'))
       {
         state.text_show = true;
         if(state.key == X && state.text_index < state.text_size - 1)
@@ -360,13 +381,13 @@ i32 main(i32 argc, char *argv[])
       }
 
       // next logic
-      if(is_type(player.pos.x, player.pos.y, '>'))
+      if(player_is_touch('>'))
       {
         state.map_index++;
         state_load(map_src[state.map_index]);
         player_load();
       }
-    }
+    } 
 
     // clear screen
     for(i32 i = 0; i < SCREEN_WIDTH * SCREEN_WIDTH; i++)
