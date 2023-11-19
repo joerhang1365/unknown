@@ -22,6 +22,7 @@ struct
   i32 tile_size;
   char *map;
   i32 map_index;
+  veci2 offset;
 
   // text
   i32 text_size;
@@ -155,6 +156,7 @@ struct
   veci2 dir;
 
   texture_t texture;
+  animator_t animation;
 } player;
 
 
@@ -178,18 +180,26 @@ void player_movement()
   if(state.key == LEFT) 
   {
     player.dir.x = -1;
+    animator_set_index(&player.animation, 2);
   }
   else if(state.key == RIGHT)
   {
     player.dir.x = 1;
+    animator_set_index(&player.animation, 1);
   }
   else if(state.key == UP)
   {
     player.dir.y = -1;
+    animator_set_index(&player.animation, 3);
   }
   else if(state.key == DOWN)
   {
     player.dir.y = 1;
+    animator_set_index(&player.animation, 4);
+  }
+  else
+  {
+    animator_set_index(&player.animation, 0);
   }
 
   player.pos.x += player.dir.x * PLAYER_SPEED;
@@ -213,10 +223,10 @@ void player_collision()
 
 void player_render()
 {
-  texture_add(
-      player.texture, 
-      player.pos.x, 
-      player.pos.y, 
+  animator_add(
+      player.animation, 
+      player.pos.x - state.offset.x * state.tile_size, 
+      player.pos.y - state.offset.y * state.tile_size, 
       state.pixels, 
       SCREEN_WIDTH, 
       SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -227,21 +237,30 @@ texture_t textures[TEXTURE_MAX];
 
 void map_render()
 {
-  for(i32 i = 0; i < state.columns; i++)
+  for(i32 i = state.offset.y; i < state.columns; i++)
   {
-    for(i32 j = 0; j < state.rows; j++)
+    for(i32 j = state.offset.x; j < state.rows; j++)
     {
+      texture_t temp;
+      texture_create("textures/blank.txt", &temp);
       switch(get_type(j, i))
       {
-        case 't':  texture_add(textures[TILE_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'g': animator_add(animations[GRASS_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'f': animator_add(animations[FLOWER_ANIM], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'T': texture_add(textures[TEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case '>': texture_add(textures[NEXT_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'p': texture_add(textures[P_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        case 'R': texture_add(textures[ROCK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
-        default: texture_add(textures[BLANK_TXT], j * state.tile_size, i * state.tile_size, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT); break;
+        case 't': temp = textures[TILE_TXT]; break;
+        case 'g': animator_add(animations[GRASS_ANIM], 0, 0, temp.pixels, temp.width, temp.width * temp.height); break;
+        case 'f': animator_add(animations[FLOWER_ANIM], 0, 0, temp.pixels, temp.width, temp.width * temp.height); break;
+        case 'T': temp = textures[TEXT_TXT]; break;
+        case '>': temp = textures[NEXT_TXT]; break;
+        case 'p': temp = textures[P_TXT]; break;
+        case 'R': temp = textures[ROCK_TXT]; break;
+        default: temp = textures[BLANK_TXT];
       }
+      texture_add(
+          temp,
+          (j - state.offset.x) * state.tile_size, 
+          (i - state.offset.y) * state.tile_size, 
+          state.pixels, 
+          SCREEN_WIDTH, 
+          SCREEN_WIDTH * SCREEN_HEIGHT);
     }
   }
 }
@@ -292,7 +311,8 @@ i32 main(i32 argc, char *argv[])
   {
     "maps/test.map",
     "maps/start.map",
-    "maps/flower.map"
+    "maps/flower.map",
+    "maps/big.map"
   };
   state_load("maps/test.map");
   player_load();
@@ -311,6 +331,7 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/rock.txt", &textures[ROCK_TXT]);
 
   // animations
+  animator_create(&player.animation, player.texture, 8, 8, 5);
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
   animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
  
@@ -359,9 +380,31 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[FLOWER_ANIM], 32);
 
       // collison
-      if(player_is_touch('R'))
+      if(player_is_touch('R') ||
+         player.pos.x < 0 ||
+         player.pos.x / state.tile_size > state.columns - 1 ||
+         player.pos.y < 0 ||
+         player.pos.y / state.tile_size > state.rows - 1)
       {
         player_collision();
+      }
+
+      // map offset
+      if(player.pos.x > (16 + state.offset.x) * state.tile_size)
+      {
+        state.offset.x++;
+      }
+      else if(player.pos.x < state.offset.x * state.tile_size)
+      {
+        state.offset.x--;
+      }
+      else if(player.pos.y > (16 + state.offset.y) * state.tile_size)
+      {
+        state.offset.y++;
+      }
+      else if(player.pos.y < state.offset.y * state.tile_size)
+      {
+        state.offset.y--;
       }
 
       // text logic
@@ -421,7 +464,7 @@ i32 main(i32 argc, char *argv[])
     SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
     for (i32 i = 0; i < SCREEN_HEIGHT; i++) 
     {
-      for(i32 j = 0; j < SCALE / 2; j++)
+      for(i32 j = 0; j < 4; j++)
       {
         SDL_RenderDrawLine(state.renderer, 0, i * SCALE + j, SCREEN_WIDTH * SCALE, i * SCALE + j);
       }

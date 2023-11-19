@@ -1,0 +1,40 @@
+columns=32
+rows=32
+tile_size=8
+"                               "
+"                          g    "
+"                               "
+"            g                  "
+"                 R             "
+"                               "
+"                               "
+"p       t                      "
+"        t                      "
+"        t             g        "
+"        t                      "
+"        t                      "
+"        t                      "
+"   R    t                      "
+"        t         g            "
+"        t                f     "
+"        t                      "
+"        t                      "
+"        t                      "
+"    g   t                      "
+"        t        g             "
+"        t                      "
+"        t             g        "
+"        t                      "
+"        t                      "
+"        t                      "
+"                               "
+"         ttttttttttttttttttttt>"
+"                g              "
+"    g                      g   "
+"                      T        "
+"                 R             "
+text_size=3
+you are not ready
+for whats ahead;
+you cannot win;
+give up now;
