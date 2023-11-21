@@ -6,7 +6,7 @@
 #include <math.h>
 #include "type.h"
 
-#define TEXTURE_MAX 9
+#define TEXTURE_MAX 11
 
 typedef struct
 {
@@ -26,7 +26,7 @@ typedef struct
 #define MAX_NUMBER_OF_COLORS 0
 #define ALL_COLORS_REQUIRED 0
 
-enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT, FLOWER_TXT, TEXT_TXT, NEXT_TXT, P_TXT, ROCK_TXT, WATER_TXT };
+enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT, FLOWER_TXT, TEXT_TXT, T_TXT, NEXT_TXT, P_TXT, ROCK_TXT, WATER_TXT, GIRL_TXT };
 
 i32 texture_create(const char *source, texture_t *texture);
 i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max);

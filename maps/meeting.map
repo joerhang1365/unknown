@@ -1,0 +1,26 @@
+columns=16
+rows=16
+tile_size=8
+"             g  "
+"   g   f    g   "
+"                "
+"    f  G  f  R  "
+"       T        "
+"  g    t     g  "
+"       t        "
+"ptttttttttttttt>"
+"     g          "
+"           R    "
+"wwwwwwwwwwwwwwww"
+"                "
+"     R          "
+"           R    "
+"                "
+"                "
+text_size=4
+hello;
+it is nice to finally
+meet you;
+i have been leaving
+messages;
+i will follow you;
