@@ -1,40 +1,84 @@
 #include "text.h"
 
+void font_create(font *font, const u16 color, const char *source)
+{
+  FILE *in = fopen(source, "r");
+  if(in == NULL)
+  {
+    printf("failed to open font data file\n");
+  }
+
+  fscanf(in, "width=%u\n", &font->width);
+  fscanf(in, "height=%u\n", &font->height);
+
+  font->data = malloc(sizeof(i32) * 27 * font->height);
+  if(font->data == NULL)
+  {
+    printf("failed to allocate memory to font data\n");
+  }
+
+  for(i32 i = 0; i < 27 * font->height; i++)
+  {
+    // gets line and extract hex value
+    char line[64];
+    fgets(line, sizeof(line), in);
+    sscanf(line, "%x", &font->data[i]);
+  }
+
+  fclose(in);
+
+  font->color = color;
+}
+
+void font_destroy(font *font)
+{
+  free(font->data);
+}
+
 // this is a fucking mess
-i32 text_render(text_t text, texture_t alphabet_txt, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
+i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
 {
   i32 overflow = 0;
   i32 row = 0;
   i32 offset = 0;
   for(i32 i = 0; i < text.length; i++)
   {
-    i32 value = 0;
-    if(text.message[i] != ' ' && text.message[i] != '\n')
-    { 
-      // does cool thing to find letter texture
-      value = text.message[i] - 'a' + 1;
-    }
-    else if(text.message[i] == '\n')
+    i32 value;
+    if(text.message[i] == '\n')
     {
       row++;
-      offset = i;
+      offset += i;
+      value = 0;
     }
-    for(i32 j = 0; j < alphabet_txt.height; j++)
+    else if(text.message[i] == ' ')
     {
-      for(i32 k = 0; k < CHAR_WIDTH; k++)
-      {
-        const i32 pixel_index = (j + y + row * CHAR_HEIGHT) * pixels_width + (k + x) + CHAR_WIDTH * (i - offset);
-        const i32 alphabet_txt_index = j * alphabet_txt.width + k + value * CHAR_WIDTH;
-        overflow = pixel_index > pixels_max;
+      value = 0;
+    }
+    else 
+    {
+      value = text.message[i] - 'a' + 1;
+    }
 
-        if(pixel_index >= 0 && 
-           pixel_index < pixels_max && 
-           (k + x) >= 0 && 
-           (k + x) < pixels_width && 
-           alphabet_txt.pixels[alphabet_txt_index] != 0x0000)
+    for(i32 j = 0; j < font.height; j++)
+    {
+      u8 data = font.data[value * font.height + j];
+      for(i32 k = 0; k < 4; k++)
+      {
+        const i32 pixel_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
+        u32 pixel;
+
+        if(data > 0x7) // this only works for width 4
         {
-          pixels[pixel_index] = alphabet_txt.pixels[alphabet_txt_index];
+          pixel = font.color;
         }
+        else
+        {
+          pixel = pixels[pixel_index];
+        }
+        
+        // left shift and only store last 4 bits
+        data = (data << 1) & 0xF;
+        pixels[pixel_index] = pixel;
       }
     }
   }

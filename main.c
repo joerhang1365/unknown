@@ -1,8 +1,7 @@
 #include <stdio.h>
-#include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include <stdlib.h>
 #include "constants.h"
 #include "type.h"
 #include "vector.h"
@@ -18,17 +17,18 @@ struct
   SDL_Texture *texture;
 
   // map
-  i32 columns;
-  i32 rows;
-  i32 tile_size;
+  u32 columns;
+  u32 rows;
+  u32 tile_size;
   char *map;
-  i32 map_index;
+  u32 map_index;
+  u32 girl_show;
   veci2 camera;
 
   // text
-  i32 text_size;
+  u32 text_size;
   text_t *texts;
-  i32 text_index;
+  u32 text_index;
   bool text_show;
 
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -46,9 +46,10 @@ i32 state_load(const char *source)
     return 1;
   }
 
-  fscanf(in, "columns=%d\n", &state.columns);
-  fscanf(in, "rows=%d\n", &state.rows);
-  fscanf(in, "tile_size=%d\n", &state.tile_size);
+  fscanf(in, "columns=%u\n", &state.columns);
+  fscanf(in, "rows=%u\n", &state.rows);
+  fscanf(in, "tile_size=%u\n", &state.tile_size);
+  fscanf(in, "girl_show=%u\n", &state.girl_show);
  
   // map
   state.map = (char*) malloc(sizeof(char) * state.columns * state.rows);
@@ -76,7 +77,7 @@ i32 state_load(const char *source)
   // text
   state.text_index = 0;
   state.text_show = false;
-  fscanf(in, "text_size=%d\n", &state.text_size);
+  fscanf(in, "text_size=%u\n", &state.text_size);
   state.texts = malloc(sizeof(text_t) * state.text_size);
   if(state.texts == NULL)
   {
@@ -98,6 +99,9 @@ i32 state_load(const char *source)
   }
 
   fclose(in);
+
+  state.camera.x = 0;
+  state.camera.y = 0;
 
   return 0;
 }
@@ -175,9 +179,9 @@ bool player_is_touch(char c)
 {
   return 
     is_type(player.pos.x, player.pos.y, c) ||
-    is_type(player.pos.x + player.width, player.pos.y, c) ||
-    is_type(player.pos.x, player.pos.y + player.height, c) ||
-    is_type(player.pos.x + player.width, player.pos.y + player.height, c);
+    is_type(player.pos.x + player.width - 1, player.pos.y, c) ||
+    is_type(player.pos.x, player.pos.y + player.height - 1, c) ||
+    is_type(player.pos.x + player.width - 1, player.pos.y + player.height - 1, c);
 }
 
 animator_t animations[ANIMATION_MAX];
@@ -237,17 +241,20 @@ i32 main(i32 argc, char *argv[])
     "maps/big.map",
     "maps/meeting.map"
   };
-  state.map_index = 4;
-  state_load(map_src[4]);
-  player_load(); 
+  state.map_index = 0;
+  state_load(map_src[state.map_index]);
+  player_load();
+
+  // font
+  font my_font;
+  font_create(&my_font, 0xFFFF, "font_data");
 
   // textures
   texture_create("textures/player.txt", &player.texture);
   texture_create("textures/tile.txt", &textures[TILE_TXT]);
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
   texture_create("textures/grass.txt", &textures[GRASS_TXT]);
-  texture_create("textures/flower.txt", &textures[FLOWER_TXT]);
-  texture_create("textures/alphabet.txt", &textures[TEXT_TXT]);
+  texture_create("textures/flower.txt", &textures[FLOWER_TXT]); 
   texture_create("textures/text.txt", &textures[T_TXT]);
   texture_create("textures/next.txt", &textures[NEXT_TXT]);
   texture_create("textures/p.txt", &textures[P_TXT]);
@@ -451,19 +458,22 @@ i32 main(i32 argc, char *argv[])
         SCREEN_WIDTH, 
         SCREEN_WIDTH * SCREEN_HEIGHT);
 
-    // girl 
-    texture_add(
-        textures[GIRL_TXT], 
-        player.prev_pos[0].x,
-        player.prev_pos[0].y,
-        state.pixels,
-        SCREEN_WIDTH,
-        SCREEN_WIDTH * SCREEN_HEIGHT);
+    // girl
+    if(state.girl_show)
+    {
+      texture_add(
+          textures[GIRL_TXT], 
+          player.prev_pos[0].x - state.camera.x * state.tile_size,
+          player.prev_pos[0].y - state.camera.y * state.tile_size,
+          state.pixels,
+          SCREEN_WIDTH,
+          SCREEN_WIDTH * SCREEN_HEIGHT);
+    }
 
     // text
     if(state.text_show == true)
     {
-      text_render(state.texts[state.text_index], textures[TEXT_TXT], 32, 98, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
+      text_render(state.texts[state.text_index], my_font, 32, 98, state.pixels, SCREEN_WIDTH, SCREEN_WIDTH * SCREEN_HEIGHT);
     }
 
     /* render stop */
@@ -503,12 +513,14 @@ i32 main(i32 argc, char *argv[])
   texture_destroy(textures[BLANK_TXT]);
   texture_destroy(textures[GRASS_TXT]);
   texture_destroy(textures[FLOWER_TXT]);
-  texture_destroy(textures[TEXT_TXT]);
   texture_destroy(textures[NEXT_TXT]);
   texture_destroy(textures[P_TXT]);
   texture_destroy(textures[ROCK_TXT]);
   texture_destroy(textures[WATER_TXT]);
   texture_destroy(textures[GIRL_TXT]);
+
+  // font
+  font_destroy(&my_font);
 
   // state 
   SDL_DestroyRenderer(state.renderer);

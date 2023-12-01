@@ -1,6 +1,7 @@
 columns=32
 rows=32
 tile_size=8
+girl_show=1
 "                                "
 "                          g     " 
 "                                "
