@@ -170,7 +170,8 @@ void player_load()
   player.offset = 0;
   veci2 pos = get_position('p');
   player.pos.x = pos.x * state.tile_size;
-  player.pos.y = pos.y * state.tile_size; 
+  player.pos.y = pos.y * state.tile_size;
+  player.prev_pos[0] = player.pos;
   player.dir.x = -1;
   player.dir.y = 0;
 }
@@ -364,29 +365,29 @@ i32 main(i32 argc, char *argv[])
 
       // animation
       animator_update(&animations[GRASS_ANIM], 24);
-      animator_update(&animations[FLOWER_ANIM], 36);
+      animator_update(&animations[FLOWER_ANIM], 24);
       animator_update(&animations[WATER_ANIM], 12);
 
       // camera
-      if(player.pos.x > (state.camera.x + 12) * state.tile_size && 
-          state.camera.x < state.columns - 16)
+      if(player.pos.x > state.camera.x + 12 * state.tile_size && 
+          state.camera.x / state.tile_size < state.columns - 16)
       {
-        state.camera.x++;
+        state.camera.x += PLAYER_SPEED;
       }
-      else if(player.pos.x < (state.camera.x + 4) * state.tile_size && 
+      else if(player.pos.x < state.camera.x + 4 * state.tile_size && 
           state.camera.x > 0)
       {
-        state.camera.x--;
+        state.camera.x -= PLAYER_SPEED;
       }
-      else if(player.pos.y > (state.camera.y + 12) * state.tile_size && 
-          state.camera.y < state.rows - 16)
+      else if(player.pos.y > state.camera.y + 12 * state.tile_size && 
+          state.camera.y / state.tile_size < state.rows - 16)
       {
-        state.camera.y++;
+        state.camera.y += PLAYER_SPEED;
       }
-      else if(player.pos.y < (state.camera.y + 4) * state.tile_size && 
+      else if(player.pos.y < state.camera.y + 4 * state.tile_size && 
           state.camera.y > 0)
       {
-        state.camera.y--;
+        state.camera.y -= PLAYER_SPEED;
       }
 
       // text logic
@@ -425,12 +426,12 @@ i32 main(i32 argc, char *argv[])
     /* render start */
 
     // map
-    for(i32 i = state.camera.y; i < state.columns; i++)
+    for(i32 i = state.camera.y / state.tile_size; i < state.columns; i++)
     {
-      for(i32 j = state.camera.x; j < state.rows; j++)
+      for(i32 j = state.camera.x / state.tile_size; j < state.rows; j++)
       {  
-        const i32 x = (j - state.camera.x) * state.tile_size;
-        const i32 y = (i - state.camera.y) * state.tile_size;
+        const i32 x = j * state.tile_size - state.camera.x;
+        const i32 y = i * state.tile_size - state.camera.y;
         const i32 width = SCREEN_WIDTH;
         const i32 max = SCREEN_WIDTH * SCREEN_HEIGHT;
         switch(get_type(j, i))
@@ -452,8 +453,8 @@ i32 main(i32 argc, char *argv[])
     // player
     animator_add(
         player.animation, 
-        player.pos.x - state.camera.x * state.tile_size, 
-        player.pos.y - state.camera.y * state.tile_size, 
+        player.pos.x - state.camera.x, 
+        player.pos.y - state.camera.y, 
         state.pixels, 
         SCREEN_WIDTH, 
         SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -463,8 +464,8 @@ i32 main(i32 argc, char *argv[])
     {
       texture_add(
           textures[GIRL_TXT], 
-          player.prev_pos[0].x - state.camera.x * state.tile_size,
-          player.prev_pos[0].y - state.camera.y * state.tile_size,
+          player.prev_pos[0].x - state.camera.x,
+          player.prev_pos[0].y - state.camera.y,
           state.pixels,
           SCREEN_WIDTH,
           SCREEN_WIDTH * SCREEN_HEIGHT);

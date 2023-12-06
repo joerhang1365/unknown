@@ -1,16 +1,16 @@
 columns=32
 rows=32
 tile_size=8
-girl_show=1
+girl_show=0
 "                                "
 "                          g     " 
 "                                "
 "            g                   "
 "                 R              "
 "                                "
-"                                "
-"p       t                       "
-"        t                       "
+"       ttt                      "
+"p      ttt                      "
+"       ttt                      "
 "        t             g         "
 "        t                       "
 "        t                       "

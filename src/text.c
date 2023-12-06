@@ -47,7 +47,7 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
     if(text.message[i] == '\n')
     {
       row++;
-      offset += i;
+      offset += i + 1;
       value = 0;
     }
     else if(text.message[i] == ' ')
