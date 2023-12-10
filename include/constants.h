@@ -7,6 +7,6 @@
 #define FRAMERATE 12
 #define PI 3.1415926535
 
-enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X };
+enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
 
 #endif

@@ -34,6 +34,7 @@ struct
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
 
+  bool debug;
   bool quit;
 } state;
 
@@ -292,6 +293,8 @@ i32 main(i32 argc, char *argv[])
             case SDLK_UP: state.key = UP; break;
             case SDLK_DOWN: state.key = DOWN; break;
             case SDLK_x: state.key = X; break;
+            case SDLK_1: state.key = ONE; break;
+            case SDLK_F1: state.key = F1; break;
             default: break;
           }
           break;
@@ -310,6 +313,24 @@ i32 main(i32 argc, char *argv[])
       frame_time = 0;
       
       /* update start */
+
+      // debug
+      if(state.key == F1)
+      {
+        state.debug = true;
+        printf("debug mode activated\n");
+      }
+
+      if(state.debug)
+      {
+        if(state.key == ONE)
+        {
+          printf("enter map index: ");
+          scanf("%u", &state.map_index);
+          state_load(map_src[state.map_index]);
+          player_load();
+        }
+      }
 
       // player movement & girl movement
       player.dir.x = 0;
