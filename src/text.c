@@ -65,6 +65,7 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
       for(i32 k = 0; k < 4; k++)
       {
         const i32 pixel_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
+        overflow = pixel_index > pixels_max;
         u32 pixel;
 
         if(data > 0x7) // this only works for width 4

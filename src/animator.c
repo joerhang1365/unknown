@@ -35,6 +35,7 @@ i32 animator_add(animator_t animator, const i32 x, const i32 y, u16 *pixels, con
     {
       const i32 pixel_index = (i + y) * pixels_width + j + x;
       const i32 animator_txt_index = i * animator.texture_map.width + j + animator.width * animator.index;
+      overflow = pixel_index > pixels_max;
         
       if(pixel_index >= 0 && 
          pixel_index < pixels_max && 

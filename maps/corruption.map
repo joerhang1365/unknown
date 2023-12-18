@@ -1,0 +1,23 @@
+columns=16
+rows=16
+tile_size=8
+girl_show=1
+"                "
+"            R   "
+"           RCR  "
+"            R   "
+"                "
+"                "
+"            R   "
+"ptTtttttttttCtt>"
+"            R   "
+"                "
+"                "
+"            R   "
+"           RCR  "
+"            R   "
+"                "
+"                "
+text_size=2
+what are those;
+they are corruption;
