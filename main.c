@@ -8,6 +8,7 @@
 #include "texture.h"
 #include "animator.h"
 #include "text.h"
+#include "corruption.h"
 
 struct 
 {
@@ -31,12 +32,61 @@ struct
   u32 text_index;
   bool text_show;
 
+  // corruption
+  u32 corrupt_num;
+  corruption_t *corruptions;
+
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
 
   bool debug;
   bool quit;
 } state;
+
+char get_type(const i32 column, const i32 row)
+{
+  return state.map[row * state.columns + column];
+}
+
+veci2 get_position(const char c, i32 instance_num)
+{
+  veci2 position;
+  i32 instance = 0;
+  for(i32 i = 0; i < state.columns; i++)
+  {
+    for(i32 j = 0; j < state.rows; j++)
+    {
+      char tile = get_type(i, j);
+      if(tile == c)
+      {
+        if(instance == instance_num)
+        {
+          position.x = i;
+          position.y = j;
+        }
+        instance++;
+      }
+    }
+  }
+  return position;
+}
+
+bool is_type(const f32 x, const f32 y, const char c)
+{
+  i32 column = floor(x / state.tile_size);
+  i32 row = floor(y / state.tile_size);
+  char tile = get_type(column, row);
+  return (tile == c);
+}
+
+void left_shift_vec2(vec2 *pos, const i32 size)
+{
+  for(i32 i = 0; i < size - 1; i++)
+  {
+    pos[i] = pos[i + 1];
+  }
+}
+
 
 i32 state_load(const char *source)
 {
@@ -51,6 +101,7 @@ i32 state_load(const char *source)
   fscanf(in, "rows=%u\n", &state.rows);
   fscanf(in, "tile_size=%u\n", &state.tile_size);
   fscanf(in, "girl_show=%u\n", &state.girl_show);
+  fscanf(in, "corrupt_num=%u\n", &state.corrupt_num);
  
   // map
   state.map = (char*) malloc(sizeof(char) * state.columns * state.rows);
@@ -101,49 +152,25 @@ i32 state_load(const char *source)
 
   fclose(in);
 
+  // corruption
+  state.corruptions = malloc(sizeof(corruption_t) * state.corrupt_num);
+  if(state.corruptions == NULL)
+  {
+    printf("failed to allocate memory to corruptions");
+    return 1;
+  }
+
+  index = 0;
+  while(index < state.corrupt_num)
+  {
+    state.corruptions[index].pos = get_position('C', index);
+    index++;
+  }
+
   state.camera.x = 0;
   state.camera.y = 0;
 
   return 0;
-}
-
-char get_type(const i32 column, const i32 row)
-{
-  return state.map[row * state.columns + column];
-}
-
-veci2 get_position(const char c)
-{
-  veci2 position;
-  for(i32 i = 0; i < state.columns; i++)
-  {
-    for(i32 j = 0; j < state.rows; j++)
-    {
-      char tile = get_type(i, j);
-      if(tile == c)
-      {
-        position.x = i;
-        position.y = j;
-      }
-    }
-  }
-  return position;
-}
-
-bool is_type(const f32 x, const f32 y, const char c)
-{
-  i32 column = floor(x / state.tile_size);
-  i32 row = floor(y / state.tile_size);
-  char tile = get_type(column, row);
-  return (tile == c);
-}
-
-void left_shift_vec2(vec2 *pos, const i32 size)
-{
-  for(i32 i = 0; i < size - 1; i++)
-  {
-    pos[i] = pos[i + 1];
-  }
 }
 
 #define PLAYER_WIDTH 8
@@ -167,7 +194,7 @@ void player_load()
 {
   player.width = PLAYER_WIDTH;
   player.height = PLAYER_HEIGHT;
-  veci2 pos = get_position('p');
+  veci2 pos = get_position('p', 0);
   player.pos.x = pos.x * state.tile_size;
   player.pos.y = pos.y * state.tile_size;
   player.prev_pos[0] = player.pos;
@@ -392,6 +419,20 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[WATER_ANIM], 12);
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
+      // corruption
+      if(animations[CORRUPTION_ANIM].frame == 0)
+      {
+        i32 index = 0;
+        while(index < state.corrupt_num)
+        {
+          veci2 target;
+          target.x = floor(player.pos.x / state.tile_size);
+          target.y = floor(player.pos.y / state.tile_size);
+          corruption_update(&state.corruptions[index], target, state.map, state.columns);
+          index++;
+        }
+      }
+
       // camera
       if(player.pos.x > state.camera.x + 12 * state.tile_size && 
           state.camera.x / state.tile_size < state.columns - 16)
@@ -437,9 +478,6 @@ i32 main(i32 argc, char *argv[])
         state_load(map_src[state.map_index]);
         player_load();
       }
-
-      // corruption
-    
 
       /* update stop */
     } 
