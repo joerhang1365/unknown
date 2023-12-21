@@ -17,7 +17,7 @@ void font_create(font *font, const u16 color, const char *source)
     printf("failed to allocate memory to font data\n");
   }
 
-  for(i32 i = 0; i < 27 * font->height; i++)
+  for(u32 i = 0; i < 27 * font->height; i++)
   {
     // gets line and extract hex value
     char line[64];
@@ -36,12 +36,12 @@ void font_destroy(font *font)
 }
 
 // this is a fucking mess
-i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
+i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max)
 {
-  i32 overflow = 0;
-  i32 row = 0;
-  i32 offset = 0;
-  for(i32 i = 0; i < text.length; i++)
+  u8 overflow = 0;
+  u32 row = 0;
+  u32 offset = 0;
+  for(u32 i = 0; i < text.length; i++)
   {
     i32 value;
     if(text.message[i] == '\n')
@@ -59,10 +59,10 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
       value = text.message[i] - 'a' + 1;
     }
 
-    for(i32 j = 0; j < font.height; j++)
+    for(u32 j = 0; j < font.height; j++)
     {
       u8 data = font.data[value * font.height + j];
-      for(i32 k = 0; k < 4; k++)
+      for(u32 k = 0; k < 4; k++)
       {
         const i32 pixel_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
         overflow = pixel_index > pixels_max;

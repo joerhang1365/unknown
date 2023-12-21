@@ -1,6 +1,6 @@
 #include "animator.h"
 
-void animator_create(animator_t *animator, const texture_t texture_map, const i32 width, const i32 height, const u32 number_of_frames) 
+void animator_create(animator_t *animator, const texture_t texture_map, const u32 width, const u32 height, const u32 number_of_frames) 
 {
   animator->texture_map = texture_map;
   animator->width = width;
@@ -26,12 +26,12 @@ void animator_update(animator_t *animator, const u32 framerate)
   }
 }
 
-i32 animator_add(animator_t animator, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
+i32 animator_add(animator_t animator, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max)
 {
-  i32 overflow = 0;
-  for(i32 i = 0; i < animator.height; i++)
+  u8 overflow = 0;
+  for(u32 i = 0; i < animator.height; i++)
   {
-    for(i32 j = 0; j < animator.width; j++)
+    for(u32 j = 0; j < animator.width; j++)
     {
       const i32 pixel_index = (i + y) * pixels_width + j + x;
       const i32 animator_txt_index = i * animator.texture_map.width + j + animator.width * animator.index;

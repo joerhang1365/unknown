@@ -41,12 +41,12 @@ i32 texture_create(const char *source, texture_t *texture)
   return success;
 }
 
-i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max)
+i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max)
 {
-  i32 overflow = 0;
-  for(i32 i = 0; i < texture.height; i++)
+  u8 overflow = 0;
+  for(u32 i = 0; i < texture.height; i++)
   {
-    for(i32 j = 0; j < texture.width; j++)
+    for(u32 j = 0; j < texture.width; j++)
     {
       const i32 pixel_index = (i + y) * pixels_width + j + x;
       overflow = pixel_index > pixels_max;

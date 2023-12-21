@@ -22,6 +22,6 @@ typedef struct
   i32 length;
 } text_t;
 
-i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const i32 pixels_width, const i32 pixels_max);
+i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max);
 
 #endif
