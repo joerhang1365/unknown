@@ -36,7 +36,7 @@ void font_destroy(font *font)
 }
 
 // this is a fucking mess
-i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max)
+i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
 {
   byte overflow = 0;
   u32 row = 0;
@@ -65,6 +65,7 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
       for(u32 k = 0; k < 4; k++)
       {
         const i32 pixels_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
+        const u32 pixels_max = pixels_width * pixels_height;
         overflow = pixels_index > pixels_max;
         u32 pixel;
 

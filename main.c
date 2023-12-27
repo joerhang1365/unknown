@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include "alpha.h"
 #include "constants.h"
 #include "type.h"
 #include "vector.h"
@@ -508,35 +509,24 @@ i32 main(i32 argc, char *argv[])
         const i32 x = j * state.tile_size - state.camera.x;
         const i32 y = i * state.tile_size - state.camera.y;
         const u32 width = SCREEN_WIDTH;
-        const u32 max = SCREEN_WIDTH * SCREEN_HEIGHT;
+        const u32 height = SCREEN_HEIGHT;
         switch(get_type(j, i))
         {
-          case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, width, max); break;
-          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, width, max); break;
-          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, width, max); break;
-          case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, width, max); break;
-          case 'T': texture_add(textures[T_TXT], x, y, state.pixels, width, max); break;
-          case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, width, max); break;
-          case 'p': texture_add(textures[P_TXT], x, y, state.pixels, width, max); break;
-          case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, width, max); break;
-          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, width, max); break;
-          case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, width, max); break;
-          case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, width, max); break;
-          default: texture_add(textures[BLANK_TXT], x, y, state.pixels, width, max);
+          case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, width, height); break;
+          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, width, height); break;
+          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, width, height); break;
+          case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, width, height); break;
+          case 'T': texture_add(textures[T_TXT], x, y, state.pixels, width, height); break;
+          case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, width, height); break;
+          case 'p': texture_add(textures[P_TXT], x, y, state.pixels, width, height); break;
+          case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, width, height); break;
+          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, width, height); break;
+          case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, width, height); break;
+          case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, width, height); break;
+          default: texture_add(textures[BLANK_TXT], x, y, state.pixels, width, height);
         }
       }
     }
-    
-    // light
-    spotlight_add(
-        player.pos.x - state.camera.x, 
-        player.pos.y - state.camera.y, 
-        0xFFF1, 
-        1, 
-        state.map, 
-        state.pixels, 
-        SCREEN_WIDTH, 
-        SCREEN_WIDTH * SCREEN_HEIGHT);
 
     // player
     animator_add(
@@ -545,7 +535,7 @@ i32 main(i32 argc, char *argv[])
         player.pos.y - state.camera.y, 
         state.pixels, 
         SCREEN_WIDTH, 
-        SCREEN_WIDTH * SCREEN_HEIGHT);
+        SCREEN_HEIGHT);
 
     // girl
     if(state.girl_show)
@@ -556,8 +546,18 @@ i32 main(i32 argc, char *argv[])
           player.prev_pos[0].y - state.camera.y,
           state.pixels,
           SCREEN_WIDTH,
-          SCREEN_WIDTH * SCREEN_HEIGHT);
+          SCREEN_HEIGHT);
     }
+
+    // lighting
+    flash_light(
+        player.pos.x - state.camera.x,
+        player.pos.y - state.camera.y,
+        64,
+        state.map,
+        state.pixels, 
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT);
 
     // text
     if(state.text_show)
@@ -569,7 +569,7 @@ i32 main(i32 argc, char *argv[])
           98, 
           state.pixels, 
           SCREEN_WIDTH, 
-          SCREEN_WIDTH * SCREEN_HEIGHT);
+          SCREEN_HEIGHT);
     }
  
     /* render stop */
