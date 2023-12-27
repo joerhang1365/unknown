@@ -1,25 +1,36 @@
 #include "corruption.h"
 
-void corruption_update(corruption_t *corruption, veci2 target, char *map, i32 columns)
+void corruption_update(corruption_t *corruption, const veci2 target, char *map, const u32 columns)
 {
   // set current char to blank
   map[corruption->pos.y * columns + corruption->pos.x] = ' ';
+
   // find dir to target
-  if(target.x < corruption->pos.x)
+  veci2 dif;
+  dif.x = abs(target.x - corruption->pos.x);
+  dif.y = abs(target.y - corruption->pos.y);
+
+  if(dif.x >= dif.y)
   {
-    corruption->pos.x--;
+    if(target.x > corruption->pos.x)
+    {
+      corruption->pos.x++;
+    }
+    else
+    {
+      corruption->pos.x--;
+    }
   }
-  else if(target.x > corruption->pos.x)
+  else if(dif.x < dif.y)
   {
-    corruption->pos.x++;
-  }
-  else if(target.y < corruption->pos.y)
-  {
-    corruption->pos.y--;
-  }
-  else if(target.y > corruption->pos.y)
-  {
-    corruption->pos.y++;
+    if(target.y > corruption->pos.y)
+    {
+      corruption->pos.y++;
+    }
+    else
+    {
+      corruption->pos.y--;
+    }
   }
 
   map[corruption->pos.y * columns + corruption->pos.x] = 'C';

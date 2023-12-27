@@ -6,6 +6,7 @@
 #include "vector.h"
 #include "texture.h"
 #include "animator.h"
+#include "lighting.h"
 #include "text.h"
 #include "corruption.h"
 
@@ -22,14 +23,14 @@ struct
   u32 tile_size;
   char *map;
   u32 map_index;
-  u8 girl_show;
+  byte girl_show;
   veci2 camera;
 
   // text
   u32 text_size;
   text_t *texts;
   u32 text_index;
-  u8 text_show;
+  byte text_show;
 
   // corruption
   u32 corrupt_num;
@@ -38,8 +39,8 @@ struct
   u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
   enum KEYS key;
 
-  u8 debug;
-  u8 quit;
+  byte debug;
+  byte quit;
 } state;
 
 char get_type(const u32 column, const u32 row)
@@ -70,7 +71,7 @@ veci2 get_position(const char c, u32 instance_num)
   return position;
 }
 
-u8 is_type(const f32 x, const f32 y, const char c)
+byte is_type(const f32 x, const f32 y, const char c)
 {
   i32 column = floor(x / state.tile_size);
   i32 row = floor(y / state.tile_size);
@@ -78,7 +79,7 @@ u8 is_type(const f32 x, const f32 y, const char c)
   return (tile == c);
 }
 
-void leftshift_vec2(vec2 *pos, vec2 new, const i32 size)
+void leftshift_veci2(veci2 *pos, veci2 new, const i32 size)
 {
   for(i32 i = 0; i < size - 1; i++)
   {
@@ -101,7 +102,7 @@ i32 state_load(const char *source)
   fscanf(in, "columns=%u\n", &state.columns);
   fscanf(in, "rows=%u\n", &state.rows);
   fscanf(in, "tile_size=%u\n", &state.tile_size);
-  fscanf(in, "girl_show=%c\n", &state.girl_show);
+  fscanf(in, "girl_show=%hhu\n", &state.girl_show);
   fscanf(in, "corrupt_num=%u\n", &state.corrupt_num);
  
   // map
@@ -183,8 +184,8 @@ struct
 {
   u32 width;
   u32 height;
-  vec2 pos;
-  vec2 prev_pos[8];
+  veci2 pos;
+  veci2 prev_pos[8];
   veci2 dir;
 } player;
 
@@ -196,13 +197,18 @@ void player_load()
   veci2 pos = get_position('p', 0);
   player.pos.x = pos.x * state.tile_size;
   player.pos.y = pos.y * state.tile_size;
-  player.prev_pos[0].x = 0;
-  player.prev_pos[0].y = 0;
+  
+  // set all prev_pos to current pos
+  for(u32 i = 0; i < 8; i++)
+  {
+    player.prev_pos[i] = player.pos;
+  }
+
   player.dir.x = 0;
   player.dir.y = 0;
 }
 
-u8 player_is_touch(char c)
+byte player_is_touch(char c)
 {
   return 
     is_type(player.pos.x, player.pos.y, c) ||
@@ -341,14 +347,16 @@ i32 main(i32 argc, char *argv[])
     delta_time = (current_time - previous_time) / 1000.0f;
     time += delta_time;
     frame_time += delta_time;
-    if (frame_time >= (f32) 1 / FRAMERATE) 
+
+    if(frame_time >= (f32) 1 / FRAMERATE) 
     {
       frame_time = 0;
       
       /* update start */
 
       // debug
-      if(state.key == F1)
+      if(state.key == F1 &&
+         state.debug == 0)
       {
         state.debug = 1;
         printf("debug mode activated\n");
@@ -369,29 +377,31 @@ i32 main(i32 argc, char *argv[])
       player.dir.x = 0;
       player.dir.y = 0;
 
-      if(state.key == LEFT) 
+      if(state.key == LEFT ||
+         state.key == RIGHT ||
+         state.key == UP ||
+         state.key == DOWN)
       {
-        player.dir.x = -1; 
-        animator_set_index(&animations[PLAYER_ANIM], 2);
-        leftshift_vec2(player.prev_pos, player.pos, 8);
-      }
-      else if(state.key == RIGHT)
-      {
-        player.dir.x = 1 ;
-        animator_set_index(&animations[PLAYER_ANIM], 1);
-        leftshift_vec2(player.prev_pos, player.pos, 8);
-      }
-      else if(state.key == UP)
-      {
-        player.dir.y = -1;
-        animator_set_index(&animations[PLAYER_ANIM], 3);
-        leftshift_vec2(player.prev_pos, player.pos, 8);
-      }
-      else if(state.key == DOWN)
-      {
-        player.dir.y = 1;
-        animator_set_index(&animations[PLAYER_ANIM], 4);
-        leftshift_vec2(player.prev_pos, player.pos, 8);
+        switch(state.key)
+        {
+          case LEFT: 
+            player.dir.x = -1; 
+            animator_set_index(&animations[PLAYER_ANIM], 2);
+            break;
+          case RIGHT:
+            player.dir.x = 1 ;
+            animator_set_index(&animations[PLAYER_ANIM], 1);
+            break;
+          case UP:
+            player.dir.y = -1;
+            animator_set_index(&animations[PLAYER_ANIM], 3);
+            break;
+          default:
+            player.dir.y = 1;
+          animator_set_index(&animations[PLAYER_ANIM], 4);
+        }
+        
+        leftshift_veci2(player.prev_pos, player.pos, 8);
       }
       else
       {
@@ -426,8 +436,8 @@ i32 main(i32 argc, char *argv[])
         while(index < state.corrupt_num)
         {
           veci2 target;
-          target.x = floor(player.pos.x / state.tile_size);
-          target.y = floor(player.pos.y / state.tile_size);
+          target.x = player.pos.x / state.tile_size;
+          target.y = player.pos.y / state.tile_size;
           corruption_update(&state.corruptions[index], target, state.map, state.columns);
           index++;
         }
@@ -456,7 +466,7 @@ i32 main(i32 argc, char *argv[])
       }
 
       // text logic
-      if(player_is_touch('T') == 1)
+      if(player_is_touch('T'))
       {
         state.text_show = 1;
         if(state.key == X && state.text_index < state.text_size - 1)
@@ -472,7 +482,7 @@ i32 main(i32 argc, char *argv[])
       }
 
       // next logic
-      if(player_is_touch('>') == 1)
+      if(player_is_touch('>'))
       {
         state.map_index++;
         state_load(map_src[state.map_index]);
@@ -482,13 +492,13 @@ i32 main(i32 argc, char *argv[])
       /* update stop */
     } 
 
+    /* render start */
+
     // clear screen
     for(u32 i = 0; i < SCREEN_WIDTH * SCREEN_WIDTH; i++)
     {
       state.pixels[i] = 0x0000;
     }
-
-    /* render start */
 
     // map
     for(u32 i = state.camera.y / state.tile_size; i < state.columns; i++)
@@ -502,24 +512,35 @@ i32 main(i32 argc, char *argv[])
         switch(get_type(j, i))
         {
           case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, width, max); break;
-          case 'g': animator_add(animations[GRASS_ANIM], x, y, state.pixels, width, max); break;
-          case 'f': animator_add(animations[FLOWER_ANIM], x, y, state.pixels, width, max); break;
+          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, width, max); break;
+          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, width, max); break;
           case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, width, max); break;
           case 'T': texture_add(textures[T_TXT], x, y, state.pixels, width, max); break;
           case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, width, max); break;
           case 'p': texture_add(textures[P_TXT], x, y, state.pixels, width, max); break;
           case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, width, max); break;
-          case 'w': animator_add(animations[WATER_ANIM], x, y, state.pixels, width, max); break;
+          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, width, max); break;
           case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, width, max); break;
           case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, width, max); break;
           default: texture_add(textures[BLANK_TXT], x, y, state.pixels, width, max);
         }
       }
     }
+    
+    // light
+    spotlight_add(
+        player.pos.x - state.camera.x, 
+        player.pos.y - state.camera.y, 
+        0xFFF1, 
+        1, 
+        state.map, 
+        state.pixels, 
+        SCREEN_WIDTH, 
+        SCREEN_WIDTH * SCREEN_HEIGHT);
 
     // player
     animator_add(
-        animations[PLAYER_ANIM], 
+        &animations[PLAYER_ANIM], 
         player.pos.x - state.camera.x, 
         player.pos.y - state.camera.y, 
         state.pixels, 
@@ -527,7 +548,7 @@ i32 main(i32 argc, char *argv[])
         SCREEN_WIDTH * SCREEN_HEIGHT);
 
     // girl
-    if(state.girl_show == 1)
+    if(state.girl_show)
     {
       texture_add(
           textures[GIRL_TXT], 
@@ -539,7 +560,7 @@ i32 main(i32 argc, char *argv[])
     }
 
     // text
-    if(state.text_show == 1)
+    if(state.text_show)
     {
       text_render(
           state.texts[state.text_index], 
@@ -550,7 +571,7 @@ i32 main(i32 argc, char *argv[])
           SCREEN_WIDTH, 
           SCREEN_WIDTH * SCREEN_HEIGHT);
     }
-
+ 
     /* render stop */
  
     const u32 pitch = 2;
@@ -573,11 +594,11 @@ i32 main(i32 argc, char *argv[])
       for(u32 j = 0; j < 4; j++)
       {
         SDL_RenderDrawLine(
-            state.renderer, 
-            0, 
-            i * SCALE + j, 
-            SCREEN_WIDTH * SCALE, 
-            i * SCALE + j);
+          state.renderer, 
+          0, 
+          i * SCALE + j, 
+          SCREEN_WIDTH * SCALE, 
+          i * SCALE + j);
       }
     }
  

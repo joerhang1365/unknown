@@ -38,7 +38,7 @@ void font_destroy(font *font)
 // this is a fucking mess
 i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_max)
 {
-  u8 overflow = 0;
+  byte overflow = 0;
   u32 row = 0;
   u32 offset = 0;
   for(u32 i = 0; i < text.length; i++)
@@ -61,11 +61,11 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
 
     for(u32 j = 0; j < font.height; j++)
     {
-      u8 data = font.data[value * font.height + j];
+      byte data = font.data[value * font.height + j];
       for(u32 k = 0; k < 4; k++)
       {
-        const i32 pixel_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
-        overflow = pixel_index > pixels_max;
+        const i32 pixels_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
+        overflow = pixels_index > pixels_max;
         u32 pixel;
 
         if(data > 0x7) // this only works for width 4
@@ -74,12 +74,12 @@ i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u1
         }
         else
         {
-          pixel = pixels[pixel_index];
+          pixel = pixels[pixels_index];
         }
         
         // left shift and only store last 4 bits
         data = (data << 1) & 0xF;
-        pixels[pixel_index] = pixel;
+        pixels[pixels_index] = pixel;
       }
     }
   }
