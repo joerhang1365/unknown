@@ -11,37 +11,42 @@
 #include "text.h"
 #include "corruption.h"
 
+#define MAP_COUNT 6
+#define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
+
 struct 
 {
-  // SDL2 shit
   SDL_Window *window;
   SDL_Renderer *renderer;
   SDL_Texture *texture;
 
-  // map
+  u16 pixels[SCREEN_MAX];
+  enum KEYS key;
+  byte debug;
+  byte quit;
+
+  /* map */
   u32 columns;
   u32 rows;
   u32 tile_size;
   char *map;
+  char *map_src[MAP_COUNT];
   u32 map_index;
   byte girl_show;
   veci2 camera;
 
-  // text
+  /* text */
   u32 text_size;
   text_t *texts;
   u32 text_index;
   byte text_show;
+  font_t font;
 
-  // corruption
+  /* the corruptions */
   u32 corrupt_num;
+  byte corrupt_time;
   corruption_t *corruptions;
 
-  u16 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
-  enum KEYS key;
-
-  byte debug;
-  byte quit;
 } state;
 
 char get_type(const u32 column, const u32 row)
@@ -49,9 +54,8 @@ char get_type(const u32 column, const u32 row)
   return state.map[row * state.columns + column];
 }
 
-veci2 get_position(const char c, u32 instance_num)
+veci2 get_position(const char c, const u32 instance_num)
 {
-  veci2 position;
   u32 instance = 0;
   for(u32 i = 0; i < state.columns; i++)
   {
@@ -62,34 +66,31 @@ veci2 get_position(const char c, u32 instance_num)
       {
         if(instance == instance_num)
         {
-          position.x = i;
-          position.y = j;
+          return veci2_create(i, j);
         }
         instance++;
       }
     }
   }
-  return position;
+  return veci2_create(0, 0);
 }
 
 byte is_type(const f32 x, const f32 y, const char c)
 {
-  i32 column = floor(x / state.tile_size);
-  i32 row = floor(y / state.tile_size);
-  char tile = get_type(column, row);
+  char tile = get_type(x / state.tile_size, y / state.tile_size);
   return (tile == c);
 }
 
-void leftshift_veci2(veci2 *pos, veci2 new, const i32 size)
+/* this for girl positions */
+void veci2_leftshift(veci2 *array, veci2 new, const u32 size)
 {
   for(i32 i = 0; i < size - 1; i++)
   {
-    pos[i] = pos[i + 1];
+    array[i] = array[i + 1];
   }
 
-  pos[size - 1] = new;
+  array[size - 1] = new;
 }
-
 
 i32 state_load(const char *source)
 {
@@ -106,7 +107,7 @@ i32 state_load(const char *source)
   fscanf(in, "girl_show=%hhu\n", &state.girl_show);
   fscanf(in, "corrupt_num=%u\n", &state.corrupt_num);
  
-  // map
+  /* map */
   state.map = malloc(sizeof(char) * state.columns * state.rows);
   if(state.map == NULL)
   {
@@ -129,7 +130,7 @@ i32 state_load(const char *source)
   }
   state.map[index - 1] = '\0';
 
-  // text
+  /* text */
   state.text_index = 0;
   state.text_show = 0;
   fscanf(in, "text_size=%u\n", &state.text_size);
@@ -155,7 +156,7 @@ i32 state_load(const char *source)
 
   fclose(in);
 
-  // corruption
+  /* corruption */
   state.corruptions = malloc(sizeof(corruption_t) * state.corrupt_num);
   if(state.corruptions == NULL)
   {
@@ -170,7 +171,7 @@ i32 state_load(const char *source)
     index++;
   }
 
-  // camera
+  /* camera */
   state.camera.x = 0;
   state.camera.y = 0;
 
@@ -199,7 +200,7 @@ void player_load()
   player.pos.x = pos.x * state.tile_size;
   player.pos.y = pos.y * state.tile_size;
   
-  // set all prev_pos to current pos
+  /* set all prev_pos to current pos */
   for(u32 i = 0; i < 8; i++)
   {
     player.prev_pos[i] = player.pos;
@@ -223,7 +224,15 @@ texture_t textures[TEXTURE_MAX];
 
 i32 main(i32 argc, char *argv[])
 {
-  /* initialize start */
+  /*
+   #### ##    ## #### ######## ####    ###    ##       #### ######## ######## 
+    ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##       
+    ##  ####  ##  ##     ##     ##   ##   ##  ##        ##      ##   ##       
+    ##  ## ## ##  ##     ##     ##  ##     ## ##        ##     ##    ######   
+    ##  ##  ####  ##     ##     ##  ######### ##        ##    ##     ##       
+    ##  ##   ###  ##     ##     ##  ##     ## ##        ##   ##      ##       
+   #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
+  */
 
   if(SDL_Init(SDL_INIT_VIDEO > 0))
   {
@@ -231,7 +240,7 @@ i32 main(i32 argc, char *argv[])
     return 1;
   }
   
-  // SDL window
+  /* window */
   state.window = 
     SDL_CreateWindow(
         "unknown", 
@@ -247,7 +256,7 @@ i32 main(i32 argc, char *argv[])
     return 1;
   }
 
-  // SDL renderer
+  /* renderer */
   state.renderer =
     SDL_CreateRenderer(
         state.window, 
@@ -260,7 +269,7 @@ i32 main(i32 argc, char *argv[])
     return 1;
   }
 
-  // SDL texture
+  /* texture */
   state.texture = 
     SDL_CreateTexture(
         state.renderer,
@@ -269,25 +278,22 @@ i32 main(i32 argc, char *argv[])
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
  
-  // state
-  char *map_src[] =
-  {
-    "maps/test.map",
-    "maps/start.map",
-    "maps/flower.map",
-    "maps/big.map",
-    "maps/meeting.map",
-    "maps/corruption.map"
-  };
+  /* map */
+  state.map_src[0] = "maps/test.map";
+  state.map_src[1] = "maps/start.map";
+  state.map_src[2] = "maps/flower.map";
+  state.map_src[3] = "maps/big.map";
+  state.map_src[4] = "maps/meeting.map";
+  state.map_src[5] = "maps/corruption.map";
+
   state.map_index = 0;
-  state_load(map_src[state.map_index]);
+  state_load(state.map_src[state.map_index]);
   player_load();
 
-  // font
-  font my_font;
-  font_create(&my_font, 0xFFFF, "font_data");
+  /* font */
+  font_create(&state.font, 0xFFFF, "font_data");
 
-  // textures
+  /* textures */
   texture_create("textures/player.txt", &textures[PLAYER_TXT]);
   texture_create("textures/tile.txt", &textures[TILE_TXT]);
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
@@ -302,15 +308,23 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/girl.txt", &textures[GIRL_TXT]);
   texture_create("textures/corruption.txt", &textures[CORRUPTION_TXT]);
 
-  // animations
+  /* animations */
   animator_create(&animations[PLAYER_ANIM], textures[PLAYER_TXT], 8, 8, 5);
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
   animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
   animator_create(&animations[WATER_ANIM], textures[WATER_TXT], 8, 8, 2);
   animator_create(&animations[CORRUPTION_ANIM], textures[CORRUPTION_ANIM], 8, 8, 1);
 
-  /* initalize end */
- 
+  /*
+   ######## ##    ## ########  
+   ##       ###   ## ##     ## 
+   ##       ####  ## ##     ## 
+   ######   ## ## ## ##     ## 
+   ##       ##  #### ##     ## 
+   ##       ##   ### ##     ## 
+   ######## ##    ## ########  
+   */
+
   f32 time = 0;
   f32 frame_time = 0;
   f32 delta_time = 0;
@@ -322,6 +336,15 @@ i32 main(i32 argc, char *argv[])
     SDL_Event event;
     while(SDL_PollEvent(&event) != 0)
     {
+      /*
+       ##    ## ######## ##    ##    #### ##    ## ########  ##     ## ######## 
+       ##   ##  ##        ##  ##      ##  ###   ## ##     ## ##     ##    ##    
+       ##  ##   ##         ####       ##  ####  ## ##     ## ##     ##    ##    
+       #####    ######      ##        ##  ## ## ## ########  ##     ##    ##    
+       ##  ##   ##          ##        ##  ##  #### ##        ##     ##    ##    
+       ##   ##  ##          ##        ##  ##   ### ##        ##     ##    ##    
+       ##    ## ########    ##       #### ##    ## ##         #######     ##  
+       */
       switch(event.type)
       {
         case SDL_QUIT: state.quit = 1; break;
@@ -337,12 +360,21 @@ i32 main(i32 argc, char *argv[])
             case SDLK_F1: state.key = F1; break;
             default: break;
           }
-          break;
+        break;
         case SDL_KEYUP: state.key = NONE; break;
         default: break;
       }
+      /*
+       ######## ##    ## ########  
+       ##       ###   ## ##     ## 
+       ##       ####  ## ##     ## 
+       ######   ## ## ## ##     ## 
+       ##       ##  #### ##     ## 
+       ##       ##   ### ##     ## 
+       ######## ##    ## ########  
+      */
     }
-
+    
     previous_time = current_time;
     current_time = SDL_GetTicks();
     delta_time = (current_time - previous_time) / 1000.0f;
@@ -353,9 +385,17 @@ i32 main(i32 argc, char *argv[])
     {
       frame_time = 0;
       
-      /* update start */
+      /*
+       ##     ## ########  ########     ###    ######## ######## 
+       ##     ## ##     ## ##     ##   ## ##      ##    ##       
+       ##     ## ##     ## ##     ##  ##   ##     ##    ##       
+       ##     ## ########  ##     ## ##     ##    ##    ######   
+       ##     ## ##        ##     ## #########    ##    ##       
+       ##     ## ##        ##     ## ##     ##    ##    ##       
+        #######  ##        ########  ##     ##    ##    ######## 
+       */
 
-      // debug
+      /* debugging */
       if(state.key == F1 &&
          state.debug == 0)
       {
@@ -369,12 +409,12 @@ i32 main(i32 argc, char *argv[])
         {
           printf("enter map index: ");
           scanf("%u", &state.map_index);
-          state_load(map_src[state.map_index]);
+          state_load(state.map_src[state.map_index]);
           player_load();
         }
       }
 
-      // player movement & girl movement
+      /* player movement & girl movement */
       player.dir.x = 0;
       player.dir.y = 0;
 
@@ -390,7 +430,7 @@ i32 main(i32 argc, char *argv[])
             animator_set_index(&animations[PLAYER_ANIM], 2);
             break;
           case RIGHT:
-            player.dir.x = 1 ;
+            player.dir.x = 1;
             animator_set_index(&animations[PLAYER_ANIM], 1);
             break;
           case UP:
@@ -399,10 +439,12 @@ i32 main(i32 argc, char *argv[])
             break;
           default:
             player.dir.y = 1;
-          animator_set_index(&animations[PLAYER_ANIM], 4);
+            animator_set_index(&animations[PLAYER_ANIM], 4);
         }
-        
-        leftshift_veci2(player.prev_pos, player.pos, 8);
+        if(state.girl_show == 1)
+        {
+          veci2_leftshift(player.prev_pos, player.pos, 8);
+        }
       }
       else
       {
@@ -412,7 +454,7 @@ i32 main(i32 argc, char *argv[])
       player.pos.x += player.dir.x * PLAYER_SPEED;
       player.pos.y += player.dir.y * PLAYER_SPEED;
 
-      // player collison
+      /* player collison */
       if(player_is_touch('R') == 1||
          player_is_touch('w') == 1||
          player.pos.x < 0 ||
@@ -424,27 +466,30 @@ i32 main(i32 argc, char *argv[])
         player.pos.y -= player.dir.y * PLAYER_SPEED;
       }
 
-      // animation
+      /* animations */
       animator_update(&animations[GRASS_ANIM], 24);
       animator_update(&animations[FLOWER_ANIM], 24);
       animator_update(&animations[WATER_ANIM], 12);
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
-      // corruption
-      if(animations[CORRUPTION_ANIM].frame == 0)
+      /* corruption */
+      state.corrupt_time++;
+      
+      if(state.corrupt_num > 0 &&
+          state.corrupt_time > 48)
       {
+        state.corrupt_time = 0;
         u32 index = 0;
         while(index < state.corrupt_num)
         {
-          veci2 target;
-          target.x = player.pos.x / state.tile_size;
-          target.y = player.pos.y / state.tile_size;
+          veci2 target = 
+            veci2_create(player.pos.x / state.tile_size, player.pos.y / state.tile_size);
           corruption_update(&state.corruptions[index], target, state.map, state.columns);
           index++;
         }
       }
 
-      // camera
+      /* camera */
       if(player.pos.x > state.camera.x + 12 * state.tile_size && 
           state.camera.x / state.tile_size < state.columns - 16)
       {
@@ -466,7 +511,7 @@ i32 main(i32 argc, char *argv[])
         state.camera.y -= PLAYER_SPEED;
       }
 
-      // text logic
+      /* text */
       if(player_is_touch('T'))
       {
         state.text_show = 1;
@@ -482,53 +527,67 @@ i32 main(i32 argc, char *argv[])
         state.text_index = 0;
       }
 
-      // next logic
+      /* next map */
       if(player_is_touch('>'))
       {
         state.map_index++;
-        state_load(map_src[state.map_index]);
+        state_load(state.map_src[state.map_index]);
         player_load();
       }
 
-      /* update stop */
+      /*
+       ######## ##    ## ########  
+       ##       ###   ## ##     ## 
+       ##       ####  ## ##     ## 
+       ######   ## ## ## ##     ## 
+       ##       ##  #### ##     ## 
+       ##       ##   ### ##     ## 
+       ######## ##    ## ########  
+      */
     } 
 
-    /* render start */
+    /*
+     ########  ######## ##    ## ########  ######## ########  
+     ##     ## ##       ###   ## ##     ## ##       ##     ## 
+     ##     ## ##       ####  ## ##     ## ##       ##     ## 
+     ########  ######   ## ## ## ##     ## ######   ########  
+     ##   ##   ##       ##  #### ##     ## ##       ##   ##   
+     ##    ##  ##       ##   ### ##     ## ##       ##    ##  
+     ##     ## ######## ##    ## ########  ######## ##     ## 
+     */
 
-    // clear screen
-    for(u32 i = 0; i < SCREEN_WIDTH * SCREEN_WIDTH; i++)
+    /* clear screen */
+    for(u32 i = 0; i < SCREEN_MAX; i++)
     {
       state.pixels[i] = 0x0000;
     }
 
-    // map
+    /* map */
     for(u32 i = state.camera.y / state.tile_size; i < state.columns; i++)
     {
       for(u32 j = state.camera.x / state.tile_size; j < state.rows; j++)
       {  
         const i32 x = j * state.tile_size - state.camera.x;
         const i32 y = i * state.tile_size - state.camera.y;
-        const u32 width = SCREEN_WIDTH;
-        const u32 height = SCREEN_HEIGHT;
         switch(get_type(j, i))
         {
-          case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, width, height); break;
-          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, width, height); break;
-          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, width, height); break;
-          case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, width, height); break;
-          case 'T': texture_add(textures[T_TXT], x, y, state.pixels, width, height); break;
-          case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, width, height); break;
-          case 'p': texture_add(textures[P_TXT], x, y, state.pixels, width, height); break;
-          case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, width, height); break;
-          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, width, height); break;
-          case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, width, height); break;
-          case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, width, height); break;
-          default: texture_add(textures[BLANK_TXT], x, y, state.pixels, width, height);
+          case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'T': texture_add(textures[T_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'p': texture_add(textures[P_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
+          default: texture_add(textures[BLANK_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT);
         }
       }
     }
 
-    // player
+    /* player */
     animator_add(
         &animations[PLAYER_ANIM], 
         player.pos.x - state.camera.x, 
@@ -537,7 +596,7 @@ i32 main(i32 argc, char *argv[])
         SCREEN_WIDTH, 
         SCREEN_HEIGHT);
 
-    // girl
+    /* girl */
     if(state.girl_show)
     {
       texture_add(
@@ -549,7 +608,7 @@ i32 main(i32 argc, char *argv[])
           SCREEN_HEIGHT);
     }
 
-    // lighting
+    /* lighting */
     flash_light(
         player.pos.x - state.camera.x,
         player.pos.y - state.camera.y,
@@ -559,20 +618,18 @@ i32 main(i32 argc, char *argv[])
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
 
-    // text
+    /* text */
     if(state.text_show)
     {
       text_render(
           state.texts[state.text_index], 
-          my_font, 
+          state.font, 
           32, 
           98, 
           state.pixels, 
           SCREEN_WIDTH, 
           SCREEN_HEIGHT);
     }
- 
-    /* render stop */
  
     const u32 pitch = 2;
     SDL_UpdateTexture(
@@ -587,7 +644,7 @@ i32 main(i32 argc, char *argv[])
         &rect,
         NULL);
 
-    // pixel grid lines
+    /* pixel grid lines */
     SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
     for (u32 i = 0; i < SCREEN_HEIGHT; i++) 
     {
@@ -602,13 +659,31 @@ i32 main(i32 argc, char *argv[])
       }
     }
  
-    // draw to screen
+    /* draw to screen */
     SDL_RenderPresent(state.renderer);
+
+    /*
+     ######## ##    ## ########  
+     ##       ###   ## ##     ## 
+     ##       ####  ## ##     ## 
+     ######   ## ## ## ##     ## 
+     ##       ##  #### ##     ## 
+     ##       ##   ### ##     ## 
+     ######## ##    ## ########  
+    */
   }
 
-  /* destroy start */
+  /*
+   ########  ########  ######  ######## ########   #######  ##    ## 
+   ##     ## ##       ##    ##    ##    ##     ## ##     ##  ##  ##  
+   ##     ## ##       ##          ##    ##     ## ##     ##   ####   
+   ##     ## ######    ######     ##    ########  ##     ##    ##    
+   ##     ## ##             ##    ##    ##   ##   ##     ##    ##    
+   ##     ## ##       ##    ##    ##    ##    ##  ##     ##    ##    
+   ########  ########  ######     ##    ##     ##  #######     ##    
+   */
 
-  // textures
+  /* textures */
   texture_destroy(textures[PLAYER_TXT]);
   texture_destroy(textures[TILE_TXT]);
   texture_destroy(textures[BLANK_TXT]);
@@ -621,10 +696,10 @@ i32 main(i32 argc, char *argv[])
   texture_destroy(textures[GIRL_TXT]);
   texture_destroy(textures[CORRUPTION_TXT]);
 
-  // font
-  font_destroy(&my_font);
+  /* font */
+  font_destroy(&state.font);
 
-  // state 
+  /* state */
   SDL_DestroyRenderer(state.renderer);
   SDL_DestroyWindow(state.window);
   SDL_DestroyTexture(state.texture);
@@ -635,7 +710,15 @@ i32 main(i32 argc, char *argv[])
 
   SDL_Quit();
 
-  /* destory end */
+  /*
+   ######## ##    ## ########  
+   ##       ###   ## ##     ## 
+   ##       ####  ## ##     ## 
+   ######   ## ## ## ##     ## 
+   ##       ##  #### ##     ## 
+   ##       ##   ### ##     ## 
+   ######## ##    ## ########  
+   */
 
   return 0;
 }

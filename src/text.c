@@ -1,6 +1,6 @@
 #include "text.h"
 
-void font_create(font *font, const u16 color, const char *source)
+void font_create(font_t *font, const u16 color, const char *source)
 {
   FILE *in = fopen(source, "r");
   if(in == NULL)
@@ -30,13 +30,13 @@ void font_create(font *font, const u16 color, const char *source)
   font->color = color;
 }
 
-void font_destroy(font *font)
+void font_destroy(font_t *font)
 {
   free(font->data);
 }
 
 // this is a fucking mess
-i32 text_render(const text_t text, const font font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
 {
   byte overflow = 0;
   u32 row = 0;

@@ -28,7 +28,6 @@ void animator_update(animator_t *animator, const u32 framerate)
     animator->frame = 0;
     animator->index = 0;
   }
-
   animator->animate = 0;
 }
 

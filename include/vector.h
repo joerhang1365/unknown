@@ -15,5 +15,6 @@ typedef struct
   i32 y;
 } veci2;
 
+veci2 veci2_create(i32 x, i32 y);
 
 #endif

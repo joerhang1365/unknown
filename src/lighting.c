@@ -1,7 +1,7 @@
 #include "lighting.h"
 #include "texture.h"
 
-i32 flash_light(const i32 x, const i32 y, const u32 radius, const char *map, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 flash_light(const i32 x, const i32 y, u32 radius, const char *map, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
 {
   i32 overflow = 0;
   const u32 pixels_max = pixels_width * pixels_height;
@@ -21,6 +21,7 @@ i32 flash_light(const i32 x, const i32 y, const u32 radius, const char *map, u16
 
   for(f32 theta = 0; theta < 2 * PI; theta += (f32) PI / LIGHT_ACCURACY)
   {
+
     for(u32 r = 0; r < radius; r++)
     {
       const i32 cylindrical_x = r * cosf(theta) + x;
