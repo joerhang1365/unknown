@@ -1,8 +1,7 @@
 #ifndef LIGHTING_H
 #define LIGHTING_H
 
-#include "constants.h"
-#include "type.h"
+#include "globals.h"
 #include "math.h"
 #include <stdlib.h>
 

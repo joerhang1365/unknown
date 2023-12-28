@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "type.h"
+#include "globals.h"
 #include "alpha.h"
 
 #define TEXTURE_MAX 13

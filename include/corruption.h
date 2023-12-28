@@ -2,7 +2,7 @@
 #define CORRUPTION_H
 
 #include <stdlib.h>
-#include "vector.h"
+#include "globals.h"
 
 typedef struct
 {

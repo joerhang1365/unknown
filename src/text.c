@@ -3,20 +3,14 @@
 void font_create(font_t *font, const u16 color, const char *source)
 {
   FILE *in = fopen(source, "r");
-  if(in == NULL)
-  {
-    printf("failed to open font data file\n");
-  }
+  ASSERT(in == NULL, "failed to open font data file\n");
 
   fscanf(in, "width=%u\n", &font->width);
   fscanf(in, "height=%u\n", &font->height);
 
   font->data = malloc(sizeof(i32) * 27 * font->height);
-  if(font->data == NULL)
-  {
-    printf("failed to allocate memory to font data\n");
-  }
-
+  ASSERT(font->data == NULL, "failed to allocate memory to font data\n");
+  
   for(u32 i = 0; i < 27 * font->height; i++)
   {
     // gets line and extract hex value

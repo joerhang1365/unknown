@@ -1,26 +1,18 @@
 #include "texture.h"
-#include "alpha.h"
 
 i32 texture_create(const char *source, texture_t *texture)
 {
   i32 width, height, bytes_per_pixel;
   i32 success = 0;
   FILE *image = fopen(source, "rb");
-  if(image == NULL)
-  {
-    printf("error opening bitmap file\n");
-    success = 1;
-  }
+  ASSERT(image == NULL, "error opening bitmap file\n");
 
   fscanf(image, "width=%i\n", &width);
   fscanf(image, "height=%i\n", &height);
   fscanf(image, "bytes_per_pixel=%i\n", &bytes_per_pixel);
 
   texture->pixels = (u16*) malloc(sizeof(u32) * width * height);
-  if(texture->pixels == NULL)
-  {
-    printf("error allocating memory to pixels\n");
-  }
+  ASSERT(texture->pixels == NULL, "error allocating memory to pixels\n");
 
   u32 buffer;
   for(i32 i = 0; i < height; i++)

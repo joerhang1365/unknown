@@ -1,226 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
-#include "alpha.h"
-#include "constants.h"
-#include "type.h"
-#include "vector.h"
-#include "texture.h"
-#include "animator.h"
+#include "state.h"
+#include "player.h"
+#include "globals.h"
+#include "camera.h"
 #include "lighting.h"
-#include "text.h"
-#include "corruption.h"
-
-#define MAP_COUNT 6
-#define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
-
-struct 
-{
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-  SDL_Texture *texture;
-
-  u16 pixels[SCREEN_MAX];
-  enum KEYS key;
-  byte debug;
-  byte quit;
-
-  /* map */
-  u32 columns;
-  u32 rows;
-  u32 tile_size;
-  char *map;
-  char *map_src[MAP_COUNT];
-  u32 map_index;
-  byte girl_show;
-  veci2 camera;
-
-  /* text */
-  u32 text_size;
-  text_t *texts;
-  u32 text_index;
-  byte text_show;
-  font_t font;
-
-  /* the corruptions */
-  u32 corrupt_num;
-  byte corrupt_time;
-  corruption_t *corruptions;
-
-} state;
-
-char get_type(const u32 column, const u32 row)
-{
-  return state.map[row * state.columns + column];
-}
-
-veci2 get_position(const char c, const u32 instance_num)
-{
-  u32 instance = 0;
-  for(u32 i = 0; i < state.columns; i++)
-  {
-    for(u32 j = 0; j < state.rows; j++)
-    {
-      char tile = get_type(i, j);
-      if(tile == c)
-      {
-        if(instance == instance_num)
-        {
-          return veci2_create(i, j);
-        }
-        instance++;
-      }
-    }
-  }
-  return veci2_create(0, 0);
-}
-
-byte is_type(const f32 x, const f32 y, const char c)
-{
-  char tile = get_type(x / state.tile_size, y / state.tile_size);
-  return (tile == c);
-}
-
-/* this for girl positions */
-void veci2_leftshift(veci2 *array, veci2 new, const u32 size)
-{
-  for(i32 i = 0; i < size - 1; i++)
-  {
-    array[i] = array[i + 1];
-  }
-
-  array[size - 1] = new;
-}
-
-i32 state_load(const char *source)
-{
-  FILE *in = fopen(source, "r");
-  if(in == NULL)
-  {
-    printf("cannot open file in tilemap\n");
-    return 1;
-  }
-
-  fscanf(in, "columns=%u\n", &state.columns);
-  fscanf(in, "rows=%u\n", &state.rows);
-  fscanf(in, "tile_size=%u\n", &state.tile_size);
-  fscanf(in, "girl_show=%hhu\n", &state.girl_show);
-  fscanf(in, "corrupt_num=%u\n", &state.corrupt_num);
- 
-  /* map */
-  state.map = malloc(sizeof(char) * state.columns * state.rows);
-  if(state.map == NULL)
-  {
-    printf("error allocating memory to map\n");
-    return 1;
-  }
-  char buffer[128];
-  u32 index = 0;
-  u32 jndex = 0;
-  while(index < state.columns * state.rows)
-  {
-    fgets(buffer, sizeof(buffer), in);
-    jndex = 1;
-    while(jndex < state.columns + 1)
-    {
-      state.map[index] = buffer[jndex];
-      jndex++;
-      index++;
-    }
-  }
-  state.map[index - 1] = '\0';
-
-  /* text */
-  state.text_index = 0;
-  state.text_show = 0;
-  fscanf(in, "text_size=%u\n", &state.text_size);
-  state.texts = malloc(sizeof(text_t) * state.text_size);
-  if(state.texts == NULL)
-  {
-    printf("failed to allocate memory to texts\n");
-    return 1;
-  }
-
-  for(u32 i = 0; i < state.text_size; i++)
-  {
-    char buffer;
-    u32 length = 0;
-    while((buffer = fgetc(in)) != ';')
-    {
-      state.texts[i].message[length] = buffer;
-      length++;
-    }
-    state.texts[i].length = length;
-    buffer = fgetc(in);
-  }
-
-  fclose(in);
-
-  /* corruption */
-  state.corruptions = malloc(sizeof(corruption_t) * state.corrupt_num);
-  if(state.corruptions == NULL)
-  {
-    printf("failed to allocate memory to corruptions\n");
-    return 1;
-  }
-
-  index = 0;
-  while(index < state.corrupt_num)
-  {
-    state.corruptions[index].pos = get_position('C', index);
-    index++;
-  }
-
-  /* camera */
-  state.camera.x = 0;
-  state.camera.y = 0;
-
-  return 0;
-}
-
-#define PLAYER_WIDTH 8
-#define PLAYER_HEIGHT 8
-#define PLAYER_SPEED 2
-
-struct
-{
-  u32 width;
-  u32 height;
-  veci2 pos;
-  veci2 prev_pos[8];
-  veci2 dir;
-} player;
-
-
-void player_load()
-{
-  player.width = PLAYER_WIDTH;
-  player.height = PLAYER_HEIGHT;
-  veci2 pos = get_position('p', 0);
-  player.pos.x = pos.x * state.tile_size;
-  player.pos.y = pos.y * state.tile_size;
-  
-  /* set all prev_pos to current pos */
-  for(u32 i = 0; i < 8; i++)
-  {
-    player.prev_pos[i] = player.pos;
-  }
-
-  player.dir.x = 0;
-  player.dir.y = 0;
-}
-
-byte player_is_touch(char c)
-{
-  return 
-    is_type(player.pos.x, player.pos.y, c) ||
-    is_type(player.pos.x + player.width - 1, player.pos.y, c) ||
-    is_type(player.pos.x, player.pos.y + player.height - 1, c) ||
-    is_type(player.pos.x + player.width - 1, player.pos.y + player.height - 1, c);
-}
-
-animator_t animations[ANIMATION_MAX];
-texture_t textures[TEXTURE_MAX];
 
 i32 main(i32 argc, char *argv[])
 {
@@ -234,11 +18,7 @@ i32 main(i32 argc, char *argv[])
    #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
   */
 
-  if(SDL_Init(SDL_INIT_VIDEO > 0))
-  {
-    printf("failed to initialize video\n");
-    return 1;
-  }
+  ASSERT(SDL_Init(SDL_INIT_VIDEO) > 0, "failed to initialize video\n");
   
   /* window */
   state.window = 
@@ -250,11 +30,7 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT * SCALE, 
         SDL_WINDOW_SHOWN);
 
-  if(state.window == NULL) 
-  {
-    printf("failed to create window\n");
-    return 1;
-  }
+  ASSERT(state.window == NULL, "failed to create window\n");
 
   /* renderer */
   state.renderer =
@@ -263,11 +39,7 @@ i32 main(i32 argc, char *argv[])
         -1, 
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-  if(state.renderer == NULL) 
-  {
-    printf("failed to create renderer\n");
-    return 1;
-  }
+  ASSERT(state.renderer == NULL, "failed to create renderer\n");
 
   /* texture */
   state.texture = 
@@ -279,21 +51,28 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT);
  
   /* map */
-  state.map_src[0] = "maps/test.map";
-  state.map_src[1] = "maps/start.map";
-  state.map_src[2] = "maps/flower.map";
-  state.map_src[3] = "maps/big.map";
-  state.map_src[4] = "maps/meeting.map";
-  state.map_src[5] = "maps/corruption.map";
+  char *map_src[MAP_COUNT];
+  map_src[0] = "maps/test.map";
+  map_src[1] = "maps/start.map";
+  map_src[2] = "maps/flower.map";
+  map_src[3] = "maps/big.map";
+  map_src[4] = "maps/meeting.map";
+  map_src[5] = "maps/corruption.map";
 
-  state.map_index = 0;
-  state_load(state.map_src[state.map_index]);
+  u32 map_index = 0;
+
+  veci2 camera;
+
+  state_load(map_src[map_index]);
   player_load();
+  camera = camera_reset();
 
   /* font */
-  font_create(&state.font, 0xFFFF, "font_data");
+  font_t font;
+  font_create(&font, 0xFFFF, "font_data");
 
   /* textures */
+  texture_t textures[TEXTURE_MAX];
   texture_create("textures/player.txt", &textures[PLAYER_TXT]);
   texture_create("textures/tile.txt", &textures[TILE_TXT]);
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
@@ -309,6 +88,7 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/corruption.txt", &textures[CORRUPTION_TXT]);
 
   /* animations */
+  animator_t animations[ANIMATION_MAX];
   animator_create(&animations[PLAYER_ANIM], textures[PLAYER_TXT], 8, 8, 5);
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
   animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
@@ -408,63 +188,17 @@ i32 main(i32 argc, char *argv[])
         if(state.key == ONE)
         {
           printf("enter map index: ");
-          scanf("%u", &state.map_index);
-          state_load(state.map_src[state.map_index]);
+          scanf("%u", &map_index);
+          state_load(map_src[map_index]);
           player_load();
+          camera = camera_reset();
         }
       }
 
-      /* player movement & girl movement */
-      player.dir.x = 0;
-      player.dir.y = 0;
-
-      if(state.key == LEFT ||
-         state.key == RIGHT ||
-         state.key == UP ||
-         state.key == DOWN)
-      {
-        switch(state.key)
-        {
-          case LEFT: 
-            player.dir.x = -1; 
-            animator_set_index(&animations[PLAYER_ANIM], 2);
-            break;
-          case RIGHT:
-            player.dir.x = 1;
-            animator_set_index(&animations[PLAYER_ANIM], 1);
-            break;
-          case UP:
-            player.dir.y = -1;
-            animator_set_index(&animations[PLAYER_ANIM], 3);
-            break;
-          default:
-            player.dir.y = 1;
-            animator_set_index(&animations[PLAYER_ANIM], 4);
-        }
-        if(state.girl_show == 1)
-        {
-          veci2_leftshift(player.prev_pos, player.pos, 8);
-        }
-      }
-      else
-      {
-        animator_set_index(&animations[PLAYER_ANIM], 0);
-      }
-
-      player.pos.x += player.dir.x * PLAYER_SPEED;
-      player.pos.y += player.dir.y * PLAYER_SPEED;
-
-      /* player collison */
-      if(player_is_touch('R') == 1||
-         player_is_touch('w') == 1||
-         player.pos.x < 0 ||
-         player.pos.x / state.tile_size > state.columns - 1 ||
-         player.pos.y < 0 ||
-         player.pos.y / state.tile_size > state.rows - 1)
-      {
-        player.pos.x -= player.dir.x * PLAYER_SPEED;
-        player.pos.y -= player.dir.y * PLAYER_SPEED;
-      }
+      /* player and girl */
+      player_movement();
+      player_animation(&animations[PLAYER_ANIM]);
+      player_collision();
 
       /* animations */
       animator_update(&animations[GRASS_ANIM], 24);
@@ -482,37 +216,38 @@ i32 main(i32 argc, char *argv[])
         u32 index = 0;
         while(index < state.corrupt_num)
         {
-          veci2 target = 
-            veci2_create(player.pos.x / state.tile_size, player.pos.y / state.tile_size);
+          veci2 target; 
+            VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
           corruption_update(&state.corruptions[index], target, state.map, state.columns);
           index++;
         }
       }
 
       /* camera */
-      if(player.pos.x > state.camera.x + 12 * state.tile_size && 
-          state.camera.x / state.tile_size < state.columns - 16)
+      //camera_follow(player.pos, &camera); 
+      if(player.pos.x > camera.x + CAMERA_CONSTRAINT * state.tile_size &&
+         camera.x < (state.columns - 16) * state.tile_size)
       {
-        state.camera.x += PLAYER_SPEED;
+        camera.x += CAMERA_SPEED;
       }
-      else if(player.pos.x < state.camera.x + 4 * state.tile_size && 
-          state.camera.x > 0)
+      else if(player.pos.x < camera.x + (CAMERA_CONSTRAINT - state.tile_size) * state.tile_size &&
+              camera.x > 0)
       {
-        state.camera.x -= PLAYER_SPEED;
+        camera.x -= CAMERA_SPEED;
       }
-      else if(player.pos.y > state.camera.y + 12 * state.tile_size && 
-          state.camera.y / state.tile_size < state.rows - 16)
+      else if(player.pos.y > camera.y + CAMERA_CONSTRAINT * state.tile_size &&
+         camera.y < (state.columns - 16) * state.tile_size)
       {
-        state.camera.y += PLAYER_SPEED;
+        camera.y += CAMERA_SPEED;
       }
-      else if(player.pos.y < state.camera.y + 4 * state.tile_size && 
-          state.camera.y > 0)
+      else if(player.pos.y < camera.y + (CAMERA_CONSTRAINT - state.tile_size) * state.tile_size &&
+              camera.y > 0)
       {
-        state.camera.y -= PLAYER_SPEED;
+        camera.y -= CAMERA_SPEED;
       }
-
+ 
       /* text */
-      if(player_is_touch('T'))
+      if(player_touch('T'))
       {
         state.text_show = 1;
         if(state.key == X && state.text_index < state.text_size - 1)
@@ -528,11 +263,12 @@ i32 main(i32 argc, char *argv[])
       }
 
       /* next map */
-      if(player_is_touch('>'))
+      if(player_touch('>'))
       {
-        state.map_index++;
-        state_load(state.map_src[state.map_index]);
+        map_index++;
+        state_load(map_src[map_index]);
         player_load();
+        camera = camera_reset();
       }
 
       /*
@@ -556,19 +292,15 @@ i32 main(i32 argc, char *argv[])
      ##     ## ######## ##    ## ########  ######## ##     ## 
      */
 
-    /* clear screen */
-    for(u32 i = 0; i < SCREEN_MAX; i++)
-    {
-      state.pixels[i] = 0x0000;
-    }
+    SCREEN_CLEAR(state.pixels, SCREEN_MAX);
 
     /* map */
-    for(u32 i = state.camera.y / state.tile_size; i < state.columns; i++)
+    for(u32 i = camera.y / state.tile_size; i < state.columns; i++)
     {
-      for(u32 j = state.camera.x / state.tile_size; j < state.rows; j++)
+      for(u32 j = camera.x / state.tile_size; j < state.rows; j++)
       {  
-        const i32 x = j * state.tile_size - state.camera.x;
-        const i32 y = i * state.tile_size - state.camera.y;
+        const i32 x = j * state.tile_size - camera.x;
+        const i32 y = i * state.tile_size - camera.y;
         switch(get_type(j, i))
         {
           case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
@@ -587,31 +319,31 @@ i32 main(i32 argc, char *argv[])
       }
     }
 
-    /* player */
+    /* player and girl */
     animator_add(
-        &animations[PLAYER_ANIM], 
-        player.pos.x - state.camera.x, 
-        player.pos.y - state.camera.y, 
-        state.pixels, 
-        SCREEN_WIDTH, 
-        SCREEN_HEIGHT);
+      &animations[PLAYER_ANIM], 
+      player.pos.x - camera.x, 
+      player.pos.y - camera.y, 
+      state.pixels, 
+      SCREEN_WIDTH, 
+      SCREEN_HEIGHT);
 
-    /* girl */
-    if(state.girl_show)
-    {
-      texture_add(
-          textures[GIRL_TXT], 
-          player.prev_pos[0].x - state.camera.x,
-          player.prev_pos[0].y - state.camera.y,
-          state.pixels,
-          SCREEN_WIDTH,
-          SCREEN_HEIGHT);
-    }
+   /* girl */
+   if(state.girl_show)
+   {
+     texture_add(
+        textures[GIRL_TXT], 
+        player.prev_pos[0].x - camera.x,
+        player.prev_pos[0].y - camera.y,
+        state.pixels,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT);
+   }
 
     /* lighting */
     flash_light(
-        player.pos.x - state.camera.x,
-        player.pos.y - state.camera.y,
+        player.pos.x - camera.x,
+        player.pos.y - camera.y,
         64,
         state.map,
         state.pixels, 
@@ -623,7 +355,7 @@ i32 main(i32 argc, char *argv[])
     {
       text_render(
           state.texts[state.text_index], 
-          state.font, 
+          font, 
           32, 
           98, 
           state.pixels, 
@@ -697,7 +429,7 @@ i32 main(i32 argc, char *argv[])
   texture_destroy(textures[CORRUPTION_TXT]);
 
   /* font */
-  font_destroy(&state.font);
+  font_destroy(&font);
 
   /* state */
   SDL_DestroyRenderer(state.renderer);

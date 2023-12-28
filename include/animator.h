@@ -1,7 +1,7 @@
 #ifndef ANIMATOR_H
 #define ANIMATOR_H
 
-#include "type.h"
+#include "globals.h"
 #include "texture.h"
 
 #define ANIMATION_MAX 5
