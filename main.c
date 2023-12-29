@@ -5,18 +5,20 @@
 #include "globals.h"
 #include "camera.h"
 #include "lighting.h"
+#include "corruption.h"
 
 i32 main(i32 argc, char *argv[])
 {
-  /*
-   #### ##    ## #### ######## ####    ###    ##       #### ######## ######## 
-    ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##       
-    ##  ####  ##  ##     ##     ##   ##   ##  ##        ##      ##   ##       
-    ##  ## ## ##  ##     ##     ##  ##     ## ##        ##     ##    ######   
-    ##  ##  ####  ##     ##     ##  ######### ##        ##    ##     ##       
-    ##  ##   ###  ##     ##     ##  ##     ## ##        ##   ##      ##       
-   #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
-  */
+
+/*
+  #### ##    ## #### ######## ####    ###    ##       #### ######## ######## 
+   ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##       
+   ##  ####  ##  ##     ##     ##   ##   ##  ##        ##      ##   ##       
+   ##  ## ## ##  ##     ##     ##  ##     ## ##        ##     ##    ######   
+   ##  ##  ####  ##     ##     ##  ######### ##        ##    ##     ##       
+   ##  ##   ###  ##     ##     ##  ##     ## ##        ##   ##      ##       
+  #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
+*/
 
   ASSERT(SDL_Init(SDL_INIT_VIDEO) > 0, "failed to initialize video\n");
   
@@ -51,6 +53,7 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT);
  
   /* map */
+  u32 map_index = 0;
   char *map_src[MAP_COUNT];
   map_src[0] = "maps/test.map";
   map_src[1] = "maps/start.map";
@@ -59,17 +62,29 @@ i32 main(i32 argc, char *argv[])
   map_src[4] = "maps/meeting.map";
   map_src[5] = "maps/corruption.map";
 
-  u32 map_index = 0;
-
+  /* camera */
   veci2 camera;
+  VECi2(camera, 0, 0);
 
+  /* state */
   state_load(map_src[map_index]);
+
+  /* player */
   player_load();
-  camera = camera_reset();
+
+  /* corruption */
+  veci2 *corruptions = NULL;
+  u32 corruption_number = 0;
+  u32 corruption_time = 0;
+  corruption_load(corruptions, &corruption_number);
 
   /* font */
   font_t font;
   font_create(&font, 0xFFFF, "font_data");
+
+  /* text */
+  byte text_show = 0;
+  u32 text_index = 0;
 
   /* textures */
   texture_t textures[TEXTURE_MAX];
@@ -95,15 +110,15 @@ i32 main(i32 argc, char *argv[])
   animator_create(&animations[WATER_ANIM], textures[WATER_TXT], 8, 8, 2);
   animator_create(&animations[CORRUPTION_ANIM], textures[CORRUPTION_ANIM], 8, 8, 1);
 
-  /*
-   ######## ##    ## ########  
-   ##       ###   ## ##     ## 
-   ##       ####  ## ##     ## 
-   ######   ## ## ## ##     ## 
-   ##       ##  #### ##     ## 
-   ##       ##   ### ##     ## 
-   ######## ##    ## ########  
-   */
+/*
+  ######## ##    ## ########  
+  ##       ###   ## ##     ## 
+  ##       ####  ## ##     ## 
+  ######   ## ## ## ##     ## 
+  ##       ##  #### ##     ## 
+  ##       ##   ### ##     ## 
+  ######## ##    ## ########  
+*/
 
   f32 time = 0;
   f32 frame_time = 0;
@@ -116,15 +131,15 @@ i32 main(i32 argc, char *argv[])
     SDL_Event event;
     while(SDL_PollEvent(&event) != 0)
     {
-      /*
-       ##    ## ######## ##    ##    #### ##    ## ########  ##     ## ######## 
-       ##   ##  ##        ##  ##      ##  ###   ## ##     ## ##     ##    ##    
-       ##  ##   ##         ####       ##  ####  ## ##     ## ##     ##    ##    
-       #####    ######      ##        ##  ## ## ## ########  ##     ##    ##    
-       ##  ##   ##          ##        ##  ##  #### ##        ##     ##    ##    
-       ##   ##  ##          ##        ##  ##   ### ##        ##     ##    ##    
-       ##    ## ########    ##       #### ##    ## ##         #######     ##  
-       */
+/*
+  ##    ## ######## ##    ##    #### ##    ## ########  ##     ## ######## 
+  ##   ##  ##        ##  ##      ##  ###   ## ##     ## ##     ##    ##    
+  ##  ##   ##         ####       ##  ####  ## ##     ## ##     ##    ##    
+  #####    ######      ##        ##  ## ## ## ########  ##     ##    ##    
+  ##  ##   ##          ##        ##  ##  #### ##        ##     ##    ##    
+  ##   ##  ##          ##        ##  ##   ### ##        ##     ##    ##    
+  ##    ## ########    ##       #### ##    ## ##         #######     ##  
+*/
       switch(event.type)
       {
         case SDL_QUIT: state.quit = 1; break;
@@ -144,15 +159,15 @@ i32 main(i32 argc, char *argv[])
         case SDL_KEYUP: state.key = NONE; break;
         default: break;
       }
-      /*
-       ######## ##    ## ########  
-       ##       ###   ## ##     ## 
-       ##       ####  ## ##     ## 
-       ######   ## ## ## ##     ## 
-       ##       ##  #### ##     ## 
-       ##       ##   ### ##     ## 
-       ######## ##    ## ########  
-      */
+/*
+  ######## ##    ## ########  
+  ##       ###   ## ##     ## 
+  ##       ####  ## ##     ##        
+  ######   ## ## ## ##     ## 
+  ##       ##  #### ##     ## 
+  ##       ##   ### ##     ## 
+  ######## ##    ## ########  
+*/
     }
     
     previous_time = current_time;
@@ -165,15 +180,15 @@ i32 main(i32 argc, char *argv[])
     {
       frame_time = 0;
       
-      /*
-       ##     ## ########  ########     ###    ######## ######## 
-       ##     ## ##     ## ##     ##   ## ##      ##    ##       
-       ##     ## ##     ## ##     ##  ##   ##     ##    ##       
-       ##     ## ########  ##     ## ##     ##    ##    ######   
-       ##     ## ##        ##     ## #########    ##    ##       
-       ##     ## ##        ##     ## ##     ##    ##    ##       
-        #######  ##        ########  ##     ##    ##    ######## 
-       */
+/*
+  ##     ## ########  ########     ###    ######## ######## 
+  ##     ## ##     ## ##     ##   ## ##      ##    ##       
+  ##     ## ##     ## ##     ##  ##   ##     ##    ##       
+  ##     ## ########  ##     ## ##     ##    ##    ######   
+  ##     ## ##        ##     ## #########    ##    ##       
+  ##     ## ##        ##     ## ##     ##    ##    ##       
+   #######  ##        ########  ##     ##    ##    ######## 
+*/
 
       /* debugging */
       if(state.key == F1 &&
@@ -191,7 +206,8 @@ i32 main(i32 argc, char *argv[])
           scanf("%u", &map_index);
           state_load(map_src[map_index]);
           player_load();
-          camera = camera_reset();
+          corruption_load(corruptions, &corruption_number);
+          VECi2(camera, 0, 0);
         }
       }
 
@@ -207,18 +223,18 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
       /* corruption */
-      state.corrupt_time++;
+      corruption_time++;
       
-      if(state.corrupt_num > 0 &&
-          state.corrupt_time > 48)
+      if(corruption_number> 0 &&
+         corruption_time > 48)
       {
-        state.corrupt_time = 0;
+        corruption_time = 0;
         u32 index = 0;
-        while(index < state.corrupt_num)
+        while(index < corruption_number)
         {
           veci2 target; 
             VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
-          corruption_update(&state.corruptions[index], target, state.map, state.columns);
+          corruption_update(&corruptions[index], target, state.map, state.columns);
           index++;
         }
       }
@@ -249,17 +265,17 @@ i32 main(i32 argc, char *argv[])
       /* text */
       if(player_touch('T'))
       {
-        state.text_show = 1;
-        if(state.key == X && state.text_index < state.text_size - 1)
+        text_show = 1;
+        if(state.key == X && text_index < state.text_size - 1)
         {
-          state.text_index++;
+          text_index++;
           state.key = NONE;
         }
       }
       else
       {
-        state.text_show = 0;
-        state.text_index = 0;
+        text_show = 0;
+        text_index = 0;
       }
 
       /* next map */
@@ -268,29 +284,30 @@ i32 main(i32 argc, char *argv[])
         map_index++;
         state_load(map_src[map_index]);
         player_load();
-        camera = camera_reset();
+        corruption_load(corruptions, &corruption_number);
+        VECi2(camera, 0, 0);
       }
 
-      /*
-       ######## ##    ## ########  
-       ##       ###   ## ##     ## 
-       ##       ####  ## ##     ## 
-       ######   ## ## ## ##     ## 
-       ##       ##  #### ##     ## 
-       ##       ##   ### ##     ## 
-       ######## ##    ## ########  
-      */
+/*
+  ######## ##    ## ########  
+  ##       ###   ## ##     ## 
+  ##       ####  ## ##     ## 
+  ######   ## ## ## ##     ## 
+  ##       ##  #### ##     ## 
+  ##       ##   ### ##     ## 
+  ######## ##    ## ########  
+*/
     } 
 
-    /*
-     ########  ######## ##    ## ########  ######## ########  
-     ##     ## ##       ###   ## ##     ## ##       ##     ## 
-     ##     ## ##       ####  ## ##     ## ##       ##     ## 
-     ########  ######   ## ## ## ##     ## ######   ########  
-     ##   ##   ##       ##  #### ##     ## ##       ##   ##   
-     ##    ##  ##       ##   ### ##     ## ##       ##    ##  
-     ##     ## ######## ##    ## ########  ######## ##     ## 
-     */
+/*
+  ########  ######## ##    ## ########  ######## ########  
+  ##     ## ##       ###   ## ##     ## ##       ##     ## 
+  ##     ## ##       ####  ## ##     ## ##       ##     ## 
+  ########  ######   ## ## ## ##     ## ######   ########  
+  ##   ##   ##       ##  #### ##     ## ##       ##   ##   
+  ##    ##  ##       ##   ### ##     ## ##       ##    ##  
+  ##     ## ######## ##    ## ########  ######## ##     ## 
+*/
 
     SCREEN_CLEAR(state.pixels, SCREEN_MAX);
 
@@ -351,10 +368,10 @@ i32 main(i32 argc, char *argv[])
         SCREEN_HEIGHT);
 
     /* text */
-    if(state.text_show)
+    if(text_show)
     {
       text_render(
-          state.texts[state.text_index], 
+          state.texts[text_index], 
           font, 
           32, 
           98, 
@@ -394,26 +411,26 @@ i32 main(i32 argc, char *argv[])
     /* draw to screen */
     SDL_RenderPresent(state.renderer);
 
-    /*
-     ######## ##    ## ########  
-     ##       ###   ## ##     ## 
-     ##       ####  ## ##     ## 
-     ######   ## ## ## ##     ## 
-     ##       ##  #### ##     ## 
-     ##       ##   ### ##     ## 
-     ######## ##    ## ########  
-    */
+/*
+  ######## ##    ## ########  
+  ##       ###   ## ##     ## 
+  ##       ####  ## ##     ## 
+  ######   ## ## ## ##     ## 
+  ##       ##  #### ##     ## 
+  ##       ##   ### ##     ## 
+  ######## ##    ## ########  
+*/
   }
 
-  /*
-   ########  ########  ######  ######## ########   #######  ##    ## 
-   ##     ## ##       ##    ##    ##    ##     ## ##     ##  ##  ##  
-   ##     ## ##       ##          ##    ##     ## ##     ##   ####   
-   ##     ## ######    ######     ##    ########  ##     ##    ##    
-   ##     ## ##             ##    ##    ##   ##   ##     ##    ##    
-   ##     ## ##       ##    ##    ##    ##    ##  ##     ##    ##    
-   ########  ########  ######     ##    ##     ##  #######     ##    
-   */
+/*
+  ########  ########  ######  ######## ########   #######  ##    ## 
+  ##     ## ##       ##    ##    ##    ##     ## ##     ##  ##  ##  
+  ##     ## ##       ##          ##    ##     ## ##     ##   ####   
+  ##     ## ######    ######     ##    ########  ##     ##    ##    
+  ##     ## ##             ##    ##    ##   ##   ##     ##    ##    
+  ##     ## ##       ##    ##    ##    ##    ##  ##     ##    ##    
+  ########  ########  ######     ##    ##     ##  #######     ##    
+*/
 
   /* textures */
   texture_destroy(textures[PLAYER_TXT]);
@@ -442,15 +459,15 @@ i32 main(i32 argc, char *argv[])
 
   SDL_Quit();
 
-  /*
-   ######## ##    ## ########  
-   ##       ###   ## ##     ## 
-   ##       ####  ## ##     ## 
-   ######   ## ## ## ##     ## 
-   ##       ##  #### ##     ## 
-   ##       ##   ### ##     ## 
-   ######## ##    ## ########  
-   */
+/*
+  ######## ##    ## ########  
+  ##       ###   ## ##     ## 
+  ##       ####  ## ##     ## 
+  ######   ## ## ## ##     ## 
+  ##       ##  #### ##     ## 
+  ##       ##   ### ##     ## 
+  ######## ##    ## ########  
+*/
 
   return 0;
 }

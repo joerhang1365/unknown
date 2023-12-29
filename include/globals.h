@@ -1,8 +1,9 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "stdio.h"
-#include "stdint.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <SDL2/SDL.h>
 
 #define ASSERT(_e, ...) if (_e) { fprintf(stderr, __VA_ARGS__); exit(1); }
 
@@ -11,7 +12,10 @@
 #define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
 #define SCALE 6
 #define FRAMERATE 12
+
 #define PI 3.1415926535
+
+#define MAP_COUNT 6
 
 typedef int16_t  i16;
 typedef uint16_t u16;
@@ -43,7 +47,5 @@ typedef struct { i32 x, y; } veci2;
   }
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
-
-#define MAP_COUNT 6
 
 #endif

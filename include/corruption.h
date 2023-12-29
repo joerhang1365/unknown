@@ -4,11 +4,7 @@
 #include <stdlib.h>
 #include "globals.h"
 
-typedef struct
-{
-  veci2 pos;
-} corruption_t;
-
-void corruption_update(corruption_t *corruption, const veci2 target, char *map, const u32 columns);
+void corruption_load(veci2 *corruptions, u32 *corruption_number);
+void corruption_update(veci2 *corruption, const veci2 target, char *map, const u32 columns);
 
 #endif

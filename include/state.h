@@ -4,7 +4,6 @@
 #include <SDL2/SDL.h>
 #include "globals.h"
 #include "text.h"
-#include "corruption.h"
 
 static struct 
 {
@@ -14,6 +13,7 @@ static struct
 
   u16 pixels[SCREEN_MAX];
   enum KEYS key;
+
   byte debug;
   byte quit;
 
@@ -27,13 +27,6 @@ static struct
   /* text */
   u32 text_size;
   text_t *texts;
-  u32 text_index;
-  byte text_show;
-
-  /* the corruptions */
-  u32 corrupt_num;
-  byte corrupt_time;
-  corruption_t *corruptions;
 
 } state;
 
@@ -72,7 +65,7 @@ static inline veci2 find_position(const char c, const u32 instance_num)
   return temp;
 }
 
-static inline i32 state_load(const char *source)
+static inline void state_load(const char *source)
 {
   FILE *in = fopen(source, "r");
   ASSERT(in == NULL, "cannot open file in tilemap\n");
@@ -81,7 +74,6 @@ static inline i32 state_load(const char *source)
   fscanf(in, "rows=%u\n", &state.rows);
   fscanf(in, "tile_size=%u\n", &state.tile_size);
   fscanf(in, "girl_show=%hhu\n", &state.girl_show);
-  fscanf(in, "corrupt_num=%u\n", &state.corrupt_num);
  
   /* map */
   state.map = malloc(sizeof(char) * state.columns * state.rows);
@@ -104,8 +96,6 @@ static inline i32 state_load(const char *source)
   state.map[index - 1] = '\0';
 
   /* text */
-  state.text_index = 0;
-  state.text_show = 0;
   fscanf(in, "text_size=%u\n", &state.text_size);
   state.texts = malloc(sizeof(text_t) * state.text_size);
   ASSERT(state.texts == NULL, "failed to allocate memory to texts\n");
@@ -124,19 +114,6 @@ static inline i32 state_load(const char *source)
   }
 
   fclose(in);
-
-  /* corruption */
-  state.corruptions = malloc(sizeof(corruption_t) * state.corrupt_num);
-  ASSERT(state.corruptions == NULL, "failed to allocate memory to corruptions\n")
-  
-  index = 0;
-  while(index < state.corrupt_num)
-  {
-    state.corruptions[index].pos = find_position('C', index);
-    index++;
-  }
-
-  return 0;
 }
 
 #endif
