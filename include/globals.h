@@ -15,8 +15,6 @@
 
 #define PI 3.1415926535
 
-#define MAP_COUNT 6
-
 typedef int16_t  i16;
 typedef uint16_t u16;
 typedef int32_t  i32;

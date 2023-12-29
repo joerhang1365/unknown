@@ -1,5 +1,7 @@
 #include "texture.h"
 
+texture_t textures[TEXTURE_MAX];
+
 i32 texture_create(const char *source, texture_t *texture)
 {
   i32 width, height, bytes_per_pixel;

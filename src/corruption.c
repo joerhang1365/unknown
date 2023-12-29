@@ -1,33 +1,34 @@
 #include "corruption.h"
 #include "state.h"
 
-void corruption_load(veci2 *corruptions, u32 *corruption_number)
+u32 corrupt_load(veci2 *corrupts, u32 corrupt_num)
 {
   // get number of corruptions
   for(u32 i = 0; i < state.columns * state.rows; i++)
   {
     if(state.map[i] == 'C')
     {
-      (*corruption_number)++;
+      corrupt_num++;
     }
   }
 
-  if(*corruption_number > 0)
+  if(corrupt_num > 0)
   {
-    corruptions = malloc(sizeof(veci2) * (*corruption_number));
-    ASSERT(corruptions == NULL, "failed to allocate memory for corruptions\n");
+    corrupts = malloc(sizeof(veci2) * corrupt_num);
+    ASSERT(corrupts == NULL, "failed to allocate memory for corruptions\n");
 
-    for(u32 i = 0; i < *corruption_number; i++)
+    for(u32 i = 0; i < corrupt_num; i++)
     {
-      corruptions[i] = find_position('C', i);
+      corrupts[i] = find_position('C', i);
     }
   }
+  return corrupt_num;
 }
 
-void corruption_update(veci2 *corruption, const veci2 target, char *map, const u32 columns)
+void corrupt_update(veci2 *corruption, const veci2 target)
 {
   // set current char to blank
-  map[corruption->y * columns + corruption->x] = ' ';
+  state.map[corruption->y * state.columns + corruption->x] = ' ';
 
   // find dir to target
   veci2 dif;
@@ -56,5 +57,5 @@ void corruption_update(veci2 *corruption, const veci2 target, char *map, const u
     }
   }
 
-  map[corruption->y * columns + corruption->x] = 'C';
+  state.map[corruption->y * state.columns + corruption->x] = 'C';
 }

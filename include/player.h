@@ -16,18 +16,16 @@ typedef struct
   u32 height;
   veci2 pos;
   veci2 dir;
-
   veci2 prev_pos[PLAYER_PREVIOUS];
 } player_t;
 
-// global player
+/* global */
 extern player_t player;
 
-void player_load();
-
-byte player_touch(char c);
 void player_movement();
-void player_animation(animator_t *animator);
+void player_animation();
+byte player_touch(char c);
 void player_collision();
+void player_load();
 
 #endif

@@ -7,6 +7,8 @@
 #include "lighting.h"
 #include "corruption.h"
 
+#define MAP_COUNT 6
+
 i32 main(i32 argc, char *argv[])
 {
 
@@ -73,10 +75,17 @@ i32 main(i32 argc, char *argv[])
   player_load();
 
   /* corruption */
-  veci2 *corruptions = NULL;
-  u32 corruption_number = 0;
-  u32 corruption_time = 0;
-  corruption_load(corruptions, &corruption_number);
+  /* TODO
+   * corruption is fucking broken
+   * fuck i get it
+   * but fix it
+   * something to do with not allocating enough
+   * stack or accessing too many
+   */
+  veci2 *corrupts = NULL;
+  u32 corrupt_num = 0;
+  u32 corrupt_time = 0;
+  corrupt_num = corrupt_load(corrupts, corrupt_num);
 
   /* font */
   font_t font;
@@ -86,8 +95,7 @@ i32 main(i32 argc, char *argv[])
   byte text_show = 0;
   u32 text_index = 0;
 
-  /* textures */
-  texture_t textures[TEXTURE_MAX];
+  /* textures */ 
   texture_create("textures/player.txt", &textures[PLAYER_TXT]);
   texture_create("textures/tile.txt", &textures[TILE_TXT]);
   texture_create("textures/blank.txt", &textures[BLANK_TXT]);
@@ -103,7 +111,6 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/corruption.txt", &textures[CORRUPTION_TXT]);
 
   /* animations */
-  animator_t animations[ANIMATION_MAX];
   animator_create(&animations[PLAYER_ANIM], textures[PLAYER_TXT], 8, 8, 5);
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
   animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
@@ -206,14 +213,14 @@ i32 main(i32 argc, char *argv[])
           scanf("%u", &map_index);
           state_load(map_src[map_index]);
           player_load();
-          corruption_load(corruptions, &corruption_number);
+          corrupt_num = corrupt_load(corrupts, corrupt_num);
           VECi2(camera, 0, 0);
         }
       }
 
       /* player and girl */
       player_movement();
-      player_animation(&animations[PLAYER_ANIM]);
+      player_animation();
       player_collision();
 
       /* animations */
@@ -223,23 +230,26 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
       /* corruption */
-      corruption_time++;
+      corrupt_time++;
       
-      if(corruption_number> 0 &&
-         corruption_time > 48)
+      if(corrupt_num> 0 &&
+         corrupt_time > 48)
       {
-        corruption_time = 0;
+        corrupt_time = 0;
         u32 index = 0;
-        while(index < corruption_number)
+        while(index < corrupt_num)
         {
           veci2 target; 
             VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
-          corruption_update(&corruptions[index], target, state.map, state.columns);
+          corrupt_update(&corrupts[index], target);
           index++;
         }
       }
 
       /* camera */
+      /* TODO
+       * make this look cleaner
+       */
       //camera_follow(player.pos, &camera); 
       if(player.pos.x > camera.x + CAMERA_CONSTRAINT * state.tile_size &&
          camera.x < (state.columns - 16) * state.tile_size)
@@ -284,7 +294,7 @@ i32 main(i32 argc, char *argv[])
         map_index++;
         state_load(map_src[map_index]);
         player_load();
-        corruption_load(corruptions, &corruption_number);
+        corrupt_num = corrupt_load(corrupts, corrupt_num);
         VECi2(camera, 0, 0);
       }
 
@@ -358,6 +368,10 @@ i32 main(i32 argc, char *argv[])
    }
 
     /* lighting */
+    /* TODO
+     * fix shadows not tracking when the camera
+     * changes
+     */
     flash_light(
         player.pos.x - camera.x,
         player.pos.y - camera.y,

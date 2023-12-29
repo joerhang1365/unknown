@@ -1,5 +1,6 @@
 #include "animator.h"
-#include "alpha.h"
+
+animator_t animations[ANIMATION_MAX];
 
 void animator_create(animator_t *animator, const texture_t texture_map, const u32 width, const u32 height, const u32 number_of_frames) 
 {

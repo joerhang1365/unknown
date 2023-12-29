@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include "globals.h"
 
-void corruption_load(veci2 *corruptions, u32 *corruption_number);
-void corruption_update(veci2 *corruption, const veci2 target, char *map, const u32 columns);
+/* returns new corrupt number */
+u32 corrupt_load(veci2 *corrupts, u32 corrupt_num);
+void corrupt_update(veci2 *corrupt, const veci2 target);
 
 #endif
