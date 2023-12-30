@@ -53,39 +53,10 @@ void state_load(const char *source)
   fclose(in);
 }
 
-
-char get_type(const u32 column, const u32 row)
+void state_destroy()
 {
-  return state.map[row * state.columns + column];
+  free(state.map);
+  free(state.texts);
+  state.map = NULL;
+  state.texts = NULL;
 }
-
-byte is_type(const f32 x, const f32 y, const char c)
-{
-  char tile = get_type(x / state.tile_size, y / state.tile_size);
-  return (tile == c);
-}
-
-veci2 find_position(const char c, const u32 instance_num)
-{
-  u32 instance = 0;
-  veci2 temp;
-  VECi2(temp, 0, 0);
-  for(u32 i = 0; i < state.columns; i++)
-  {
-    for(u32 j = 0; j < state.rows; j++)
-    {
-      char tile = get_type(i, j);
-      if(tile == c)
-      {
-        if(instance == instance_num)
-        {
-          VECi2(temp, i, j);
-          break;
-        }
-        instance++;
-      }
-    }
-  }
-  return temp;
-}
-

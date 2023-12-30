@@ -1,4 +1,5 @@
 #include "animator.h"
+#include "globals.h"
 
 animator_t animations[ANIMATION_MAX];
 
@@ -29,7 +30,7 @@ void animator_update(animator_t *animator, const u32 framerate)
   }
 }
 
-i32 animator_add(animator_t *animator, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 animator_add(animator_t *animator, const i32 x, const i32 y)
 {
   byte overflow = 0;
 
@@ -37,20 +38,19 @@ i32 animator_add(animator_t *animator, const i32 x, const i32 y, u16 *pixels, co
   {
     for(u32 j = 0; j < animator->width; j++)
     {
-      const i32 pixels_index = (i + y) * pixels_width + j + x;
+      const i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
       const u32 animator_index = i * animator->texture_map.width + j + animator->width * animator->index;
       const u16 animator_pixel = animator->texture_map.pixels[animator_index];
-      const u32 pixels_max = pixels_width * pixels_height;
-      overflow = pixels_index > pixels_max;
+      overflow = pixels_index > SCREEN_MAX;
 
       if(pixels_index >= 0 && 
         overflow == 0 && 
         (j + x) >= 0 && 
-        (j + x) < pixels_width &&
+        (j + x) < SCREEN_WIDTH &&
         (i + y) >= 0 &&
-        (i + y) < pixels_height)
+        (i + y) < SCREEN_HEIGHT)
       {
-        ALPHA_BLEND_OVER(pixels[pixels_index], animator_pixel, pixels[pixels_index]);
+        ALPHA_BLEND_OVER(state.pixels[pixels_index], animator_pixel, state.pixels[pixels_index]);
       }
     }
   }

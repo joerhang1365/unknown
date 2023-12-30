@@ -1,4 +1,5 @@
 #include "text.h"
+#include "state.h"
 
 void font_create(font_t *font, const u16 color, const char *source)
 {
@@ -27,10 +28,11 @@ void font_create(font_t *font, const u16 color, const char *source)
 void font_destroy(font_t *font)
 {
   free(font->data);
+  font->data = NULL;
 }
 
 // this is a fucking mess
-i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y)
 {
   byte overflow = 0;
   u32 row = 0;
@@ -58,9 +60,8 @@ i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y, 
       byte data = font.data[value * font.height + j];
       for(u32 k = 0; k < 4; k++)
       {
-        const i32 pixels_index = (j + y + row * font.height) * pixels_width + (k + x) + 4 * (i - offset);
-        const u32 pixels_max = pixels_width * pixels_height;
-        overflow = pixels_index > pixels_max;
+        const i32 pixels_index = (j + y + row * font.height) * SCREEN_WIDTH + (k + x) + 4 * (i - offset);
+        overflow = pixels_index > SCREEN_MAX;
         u32 pixel;
 
         if(data > 0x7) // this only works for width 4
@@ -69,12 +70,12 @@ i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y, 
         }
         else
         {
-          pixel = pixels[pixels_index];
+          pixel = state.pixels[pixels_index];
         }
         
         // left shift and only store last 4 bits
         data = (data << 1) & 0xF;
-        pixels[pixels_index] = pixel;
+        state.pixels[pixels_index] = pixel;
       }
     }
   }

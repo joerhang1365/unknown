@@ -1,4 +1,5 @@
 #include "texture.h"
+#include "globals.h"
 
 texture_t textures[TEXTURE_MAX];
 
@@ -36,34 +37,34 @@ i32 texture_create(const char *source, texture_t *texture)
   return success;
 }
 
-i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 texture_add(texture_t texture, const i32 x, const i32 y)
 {
-  byte overflow = 0;
+  i32 overflow = 0;
 
   for(u32 i = 0; i < texture.height; i++)
   {
     for(u32 j = 0; j < texture.width; j++)
     {
-      const i32 pixels_index = (i + y) * pixels_width + j + x;
+      i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
       const u16 texture_pixel = texture.pixels[i * texture.width + j];
-      const u32 pixels_max = pixels_width * pixels_height;
-      overflow = pixels_index > pixels_max;
 
       if(pixels_index >= 0 && 
         overflow == 0 && 
         (j + x) >= 0 && 
-        (j + x) < pixels_width &&
+        (j + x) < SCREEN_WIDTH &&
         (i + y) >= 0 &&
-        (i + y) < pixels_height)
+        (i + y) < SCREEN_WIDTH)
       {
-        ALPHA_BLEND_OVER(pixels[pixels_index], texture_pixel, pixels[pixels_index]);
+        pixels_index = pixels_index;
+        ALPHA_BLEND_OVER(state.pixels[pixels_index], texture_pixel, state.pixels[pixels_index]);
       }
     }
   }
   return overflow;
 }
 
-void texture_destroy(texture_t texture)
+void texture_destroy(texture_t *texture)
 {
-  free(texture.pixels);
+  free(texture->pixels);
+  texture->pixels = NULL;
 }

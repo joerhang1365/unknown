@@ -4,11 +4,11 @@
 #include "text.h"
 #include "player.h"
 #include "globals.h"
-#include "camera.h"
 #include "lighting.h"
 #include "corrupt.h"
 
 #define MAP_COUNT 6
+#define CAMERA_SPEED 2
 
 i32 main(i32 argc, char *argv[])
 {
@@ -77,17 +77,14 @@ i32 main(i32 argc, char *argv[])
 
   /* corruption */
   /* TODO
-   * corruption is fucking broken
-   * fuck i get it
-   * but fix it
-   * something to do with not allocating enough
-   * stack or accessing too many
+   * figure out how to initilze memory for each num
    */
   veci2 *corrupts = NULL;
+  corrupts = malloc(sizeof(veci2) * 3);
+  ASSERT(corrupts == NULL, "failed to allocate memory to corrupts\n");
   u32 corrupt_num = 0;
   u32 corrupt_time = 0;
-  corrupt_num = get_corrupt_num();
-  corrupt_load(corrupts, corrupt_num); 
+  corrupt_num = corrupt_load(corrupts);
 
   /* font */
   font_t font;
@@ -214,9 +211,8 @@ i32 main(i32 argc, char *argv[])
           printf("enter map index: ");
           scanf("%u", &map_index);
           state_load(map_src[map_index]);
-          player_load();
-          corrupt_num = get_corrupt_num();
-          corrupt_load(corrupts, corrupt_num);
+          player_load(); 
+          corrupt_num = corrupt_load(corrupts);
           VECi2(camera, 0, 0);
         }
       }
@@ -233,55 +229,37 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
       /* corruption */
-      /*
       corrupt_time++;
-      
-      if(corrupt_num> 0 &&
-         corrupt_time > 48)
-      {
-        corrupt_time = 0;
-        u32 index = 0;
-        while(index < corrupt_num)
-        {
-          veci2 target; 
-            VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
-          corrupt_update(&corrupts[index], target);
-          index++;
-        }
-      } */
-
-      corrupt_time++;
-      
       if(corrupt_num > 0 &&
          corrupt_time > 48)
       {
         corrupt_time = 0;
         veci2 target;
-        VECi2(target, player.pos.x * state.tile_size, player.pos.y / state.tile_size);
-        corrupt_update(&corrupts[0], target);
+
+        for(u32 i = 0; i < corrupt_num; i++)
+        {
+          VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
+          corrupt_update(&corrupts[i], target);
+        }
       }
 
-      /* camera */
-      /* TODO
-       * make this look cleaner
-       */
-      //camera_follow(player.pos, &camera);
-      if(player.pos.x > camera.x + CAMERA_CONSTRAINT * state.tile_size &&
+      /* player camera */
+      if(player.pos.x > camera.x + 12 * state.tile_size &&
          camera.x < (state.columns - 16) * state.tile_size)
       {
         camera.x += CAMERA_SPEED;
       }
-      else if(player.pos.x < camera.x + (CAMERA_CONSTRAINT - state.tile_size) * state.tile_size &&
+      else if(player.pos.x < camera.x -4 * state.tile_size &&
               camera.x > 0)
       {
         camera.x -= CAMERA_SPEED;
       }
-      else if(player.pos.y > camera.y + CAMERA_CONSTRAINT * state.tile_size &&
+      else if(player.pos.y > camera.y + 12 * state.tile_size &&
          camera.y < (state.columns - 16) * state.tile_size)
       {
         camera.y += CAMERA_SPEED;
       }
-      else if(player.pos.y < camera.y + (CAMERA_CONSTRAINT - state.tile_size) * state.tile_size &&
+      else if(player.pos.y < camera.y -4  * state.tile_size &&
               camera.y > 0)
       {
         camera.y -= CAMERA_SPEED;
@@ -291,7 +269,8 @@ i32 main(i32 argc, char *argv[])
       if(player_touch('T'))
       {
         text_show = 1;
-        if(state.key == X && text_index < state.text_size - 1)
+        if(state.key == X && 
+           text_index < state.text_size - 1)
         {
           text_index++;
           state.key = NONE;
@@ -309,8 +288,7 @@ i32 main(i32 argc, char *argv[])
         map_index++;
         state_load(map_src[map_index]);
         player_load();
-        corrupt_num = get_corrupt_num();
-        corrupt_load(corrupts, corrupt_num);
+        corrupt_num = corrupt_load(corrupts);
         VECi2(camera, 0, 0);
       }
 
@@ -346,18 +324,18 @@ i32 main(i32 argc, char *argv[])
         const i32 y = i * state.tile_size - camera.y;
         switch(get_type(j, i))
         {
-          case 't': texture_add(textures[TILE_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'g': animator_add(&animations[GRASS_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'f': animator_add(&animations[FLOWER_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'W': texture_add(textures[WOOD_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'T': texture_add(textures[T_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case '>': texture_add(textures[NEXT_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'p': texture_add(textures[P_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'R': texture_add(textures[ROCK_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'w': animator_add(&animations[WATER_ANIM], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'G': texture_add(textures[GIRL_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          case 'C': texture_add(textures[CORRUPTION_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT); break;
-          default: texture_add(textures[BLANK_TXT], x, y, state.pixels, SCREEN_WIDTH, SCREEN_HEIGHT);
+          case 't': texture_add(textures[TILE_TXT], x, y); break;
+          case 'g': animator_add(&animations[GRASS_ANIM], x, y); break;
+          case 'f': animator_add(&animations[FLOWER_ANIM], x, y); break;
+          case 'W': texture_add(textures[WOOD_TXT], x, y); break;
+          case 'T': texture_add(textures[T_TXT], x, y); break;
+          case '>': texture_add(textures[NEXT_TXT], x, y); break;
+          case 'p': texture_add(textures[P_TXT], x, y); break;
+          case 'R': texture_add(textures[ROCK_TXT], x, y); break;
+          case 'w': animator_add(&animations[WATER_ANIM], x, y); break;
+          case 'G': texture_add(textures[GIRL_TXT], x, y); break;
+          case 'C': texture_add(textures[CORRUPTION_TXT], x, y); break;
+          default: texture_add(textures[BLANK_TXT], x, y);
         }
       }
     }
@@ -366,10 +344,7 @@ i32 main(i32 argc, char *argv[])
     animator_add(
       &animations[PLAYER_ANIM], 
       player.pos.x - camera.x, 
-      player.pos.y - camera.y, 
-      state.pixels, 
-      SCREEN_WIDTH, 
-      SCREEN_HEIGHT);
+      player.pos.y - camera.y);
 
    /* girl */
    if(state.girl_show)
@@ -377,26 +352,19 @@ i32 main(i32 argc, char *argv[])
      texture_add(
         textures[GIRL_TXT], 
         player.prev_pos[0].x - camera.x,
-        player.prev_pos[0].y - camera.y,
-        state.pixels,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT);
+        player.prev_pos[0].y - camera.y);
    }
 
     /* lighting */
     /* TODO
-     * fix shadows not tracking when the camera
-     * changes
+     * fix light stopping on solid types
      */
     flash_light(
         player.pos.x,
         player.pos.y,
         camera,
         64,
-        state.map,
-        state.pixels, 
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT);
+        time);
 
     /* text */
     if(text_show)
@@ -405,10 +373,7 @@ i32 main(i32 argc, char *argv[])
           state.texts[text_index], 
           font, 
           32, 
-          98, 
-          state.pixels, 
-          SCREEN_WIDTH, 
-          SCREEN_HEIGHT);
+          98);
     }
  
     const u32 pitch = 2;
@@ -464,26 +429,30 @@ i32 main(i32 argc, char *argv[])
 */
 
   /* textures */
-  texture_destroy(textures[PLAYER_TXT]);
-  texture_destroy(textures[TILE_TXT]);
-  texture_destroy(textures[BLANK_TXT]);
-  texture_destroy(textures[GRASS_TXT]);
-  texture_destroy(textures[FLOWER_TXT]);
-  texture_destroy(textures[NEXT_TXT]);
-  texture_destroy(textures[P_TXT]);
-  texture_destroy(textures[ROCK_TXT]);
-  texture_destroy(textures[WATER_TXT]);
-  texture_destroy(textures[GIRL_TXT]);
-  texture_destroy(textures[CORRUPTION_TXT]);
+  texture_destroy(&textures[PLAYER_TXT]);
+  texture_destroy(&textures[TILE_TXT]);
+  texture_destroy(&textures[BLANK_TXT]);
+  texture_destroy(&textures[GRASS_TXT]);
+  texture_destroy(&textures[FLOWER_TXT]);
+  texture_destroy(&textures[NEXT_TXT]);
+  texture_destroy(&textures[P_TXT]);
+  texture_destroy(&textures[ROCK_TXT]);
+  texture_destroy(&textures[WATER_TXT]);
+  texture_destroy(&textures[GIRL_TXT]);
+  texture_destroy(&textures[CORRUPTION_TXT]);
 
   /* font */
   font_destroy(&font);
 
   /* state */
+  state_destroy();
+
+  /* corrupts */
+  free(corrupts);
+
   SDL_DestroyRenderer(state.renderer);
   SDL_DestroyWindow(state.window);
   SDL_DestroyTexture(state.texture);
-  free(state.map);
   state.renderer = NULL;
   state.window = NULL;
   state.texture = NULL;

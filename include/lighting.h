@@ -2,9 +2,11 @@
 #define LIGHTING_H
 
 #include "globals.h"
+#include "state.h"
 
 #define LIGHT_ACCURACY 360
+#define LIGHT_FLICKER 5
 
-i32 flash_light(const i32 x, const i32 y, veci2 camera, u32 radius, const char *map, u16 *pixels, const u32 pixels_width, const u32 pixels_height);
+i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius, const f32 time);
 
 #endif

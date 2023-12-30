@@ -46,10 +46,10 @@ typedef struct { i32 x, y; } veci2;
     pixels[i] = 0x0000; \
   }
 
-#define ALPHA_BLEND(_color) (u16) _color = \
-  ((u16)((_color & 0xF000) * (_color & 0x000F) / 16.0f) & 0xF000) + \
-  ((u16)((_color & 0x0F00) * (_color & 0x000F) / 16.0f) & 0x0F00) + \
-  ((u16)((_color & 0x00F0) * (_color & 0x000F) / 16.0f) & 0x00F0) + \
+#define ALPHA_BLEND(_color) _color = \
+  ((u16)((_color & 0xF000) * (f32)(_color & 0x000F) / 16.0f) & 0xF000) + \
+  ((u16)((_color & 0x0F00) * (f32)(_color & 0x000F) / 16.0f) & 0x0F00) + \
+  ((u16)((_color & 0x00F0) * (f32)(_color & 0x000F) / 16.0f) & 0x00F0) + \
   (u16)(_color & 0x000F);
 
 #define ALPHA_BLEND_OVER(_color, _a, _b) _color = \
