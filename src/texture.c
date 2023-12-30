@@ -56,7 +56,7 @@ i32 texture_add(texture_t texture, const i32 x, const i32 y, u16 *pixels, const 
         (i + y) >= 0 &&
         (i + y) < pixels_height)
       {
-        pixels[pixels_index] = alpha_blend_over(texture_pixel, pixels[pixels_index]);
+        ALPHA_BLEND_OVER(pixels[pixels_index], texture_pixel, pixels[pixels_index]);
       }
     }
   }

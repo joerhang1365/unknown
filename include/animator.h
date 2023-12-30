@@ -13,7 +13,6 @@ typedef struct
   u32 index;
   u32 number_of_frames;
   u32 frame;
-  byte animate;
 } animator_t;
 
 enum ANIMATIONS { PLAYER_ANIM, GRASS_ANIM, FLOWER_ANIM, WATER_ANIM, CORRUPTION_ANIM };

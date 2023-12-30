@@ -1,11 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "state.h"
+#include "texture.h"
+#include "animator.h"
+#include "text.h"
 #include "player.h"
 #include "globals.h"
 #include "camera.h"
 #include "lighting.h"
-#include "corruption.h"
+#include "corrupt.h"
 
 #define MAP_COUNT 6
 
@@ -85,7 +86,8 @@ i32 main(i32 argc, char *argv[])
   veci2 *corrupts = NULL;
   u32 corrupt_num = 0;
   u32 corrupt_time = 0;
-  corrupt_num = corrupt_load(corrupts, corrupt_num);
+  corrupt_num = get_corrupt_num();
+  corrupt_load(corrupts, corrupt_num); 
 
   /* font */
   font_t font;
@@ -213,7 +215,8 @@ i32 main(i32 argc, char *argv[])
           scanf("%u", &map_index);
           state_load(map_src[map_index]);
           player_load();
-          corrupt_num = corrupt_load(corrupts, corrupt_num);
+          corrupt_num = get_corrupt_num();
+          corrupt_load(corrupts, corrupt_num);
           VECi2(camera, 0, 0);
         }
       }
@@ -230,6 +233,7 @@ i32 main(i32 argc, char *argv[])
       animator_update(&animations[CORRUPTION_ANIM], 48);
 
       /* corruption */
+      /*
       corrupt_time++;
       
       if(corrupt_num> 0 &&
@@ -244,13 +248,24 @@ i32 main(i32 argc, char *argv[])
           corrupt_update(&corrupts[index], target);
           index++;
         }
+      } */
+
+      corrupt_time++;
+      
+      if(corrupt_num > 0 &&
+         corrupt_time > 48)
+      {
+        corrupt_time = 0;
+        veci2 target;
+        VECi2(target, player.pos.x * state.tile_size, player.pos.y / state.tile_size);
+        corrupt_update(&corrupts[0], target);
       }
 
       /* camera */
       /* TODO
        * make this look cleaner
        */
-      //camera_follow(player.pos, &camera); 
+      //camera_follow(player.pos, &camera);
       if(player.pos.x > camera.x + CAMERA_CONSTRAINT * state.tile_size &&
          camera.x < (state.columns - 16) * state.tile_size)
       {
@@ -294,7 +309,8 @@ i32 main(i32 argc, char *argv[])
         map_index++;
         state_load(map_src[map_index]);
         player_load();
-        corrupt_num = corrupt_load(corrupts, corrupt_num);
+        corrupt_num = get_corrupt_num();
+        corrupt_load(corrupts, corrupt_num);
         VECi2(camera, 0, 0);
       }
 
@@ -373,8 +389,9 @@ i32 main(i32 argc, char *argv[])
      * changes
      */
     flash_light(
-        player.pos.x - camera.x,
-        player.pos.y - camera.y,
+        player.pos.x,
+        player.pos.y,
+        camera,
         64,
         state.map,
         state.pixels, 

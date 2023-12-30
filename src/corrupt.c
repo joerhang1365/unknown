@@ -1,28 +1,31 @@
-#include "corruption.h"
-#include "state.h"
+#include "corrupt.h"
 
-u32 corrupt_load(veci2 *corrupts, u32 corrupt_num)
+u32 get_corrupt_num()
 {
-  // get number of corruptions
+  u32 temp = 0;
+
   for(u32 i = 0; i < state.columns * state.rows; i++)
   {
     if(state.map[i] == 'C')
     {
-      corrupt_num++;
+      temp++;
     }
   }
+  
+  return temp;
+}
 
+void corrupt_load(veci2 *corrupts, u32 corrupt_num)
+{
   if(corrupt_num > 0)
   {
     corrupts = malloc(sizeof(veci2) * corrupt_num);
-    ASSERT(corrupts == NULL, "failed to allocate memory for corruptions\n");
-
+    ASSERT(corrupts == NULL, "failed to allocate memory for corruptions\n");;
     for(u32 i = 0; i < corrupt_num; i++)
     {
       corrupts[i] = find_position('C', i);
     }
   }
-  return corrupt_num;
 }
 
 void corrupt_update(veci2 *corruption, const veci2 target)

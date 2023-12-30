@@ -1,8 +1,6 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "globals.h"
 
 typedef struct

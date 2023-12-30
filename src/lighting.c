@@ -1,6 +1,6 @@
 #include "lighting.h"
 
-i32 flash_light(const i32 x, const i32 y, u32 radius, const char *map, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
+i32 flash_light(const i32 x, const i32 y, veci2 camera, u32 radius, const char *map, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
 {
   i32 overflow = 0;
   const u32 pixels_max = pixels_width * pixels_height;
@@ -21,20 +21,15 @@ i32 flash_light(const i32 x, const i32 y, u32 radius, const char *map, u16 *pixe
 
     for(u32 r = 0; r < radius; r++)
     {
-      const i32 cylindrical_x = r * cosf(theta) + x;
-      const i32 cylindrical_y = r * sinf(theta) + y;
+      const i32 cylindrical_x = r * cosf(theta) + x - camera.x;
+      const i32 cylindrical_y = r * sinf(theta) + y - camera.y;
       const i32 pixels_index = cylindrical_y * pixels_width + cylindrical_x;
       overflow = pixels_index > pixels_max;
 
       // make light not pass through solid objects
-      u32 column = cylindrical_x / 8;
-      u32 row = cylindrical_y / 8;
-      char type = ' ';
-      // protect segfault
-      if(column <= 16 && row <= 16)
-      {
-        type = map[row * 16 + column];
-      }
+      u32 column = (u16)((f32)(cylindrical_x - camera.x) / 8 - cosf(theta)) & 0x000F;
+      u32 row = (u16)((f32)(cylindrical_y - camera.y) / 8 - sinf(theta)) & 0x000F;
+      char type = map[row * 16 + column];
       if(type == 'R')
       {
         break;

@@ -1,8 +1,6 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <SDL2/SDL.h>
-#include <math.h>
 #include "globals.h"
 #include "text.h"
 

@@ -19,8 +19,6 @@ void animator_set_index(animator_t *animator, const u32 frame)
 
 void animator_update(animator_t *animator, const u32 framerate) 
 {
-  if(animator->animate == 0) return;
-
   animator->index = animator->frame / framerate;
   ++animator->frame;
 
@@ -29,7 +27,6 @@ void animator_update(animator_t *animator, const u32 framerate)
     animator->frame = 0;
     animator->index = 0;
   }
-  animator->animate = 0;
 }
 
 i32 animator_add(animator_t *animator, const i32 x, const i32 y, u16 *pixels, const u32 pixels_width, const u32 pixels_height)
@@ -53,12 +50,11 @@ i32 animator_add(animator_t *animator, const i32 x, const i32 y, u16 *pixels, co
         (i + y) >= 0 &&
         (i + y) < pixels_height)
       {
-        pixels[pixels_index] = alpha_blend_over(animator_pixel, pixels[pixels_index]);
+        ALPHA_BLEND_OVER(pixels[pixels_index], animator_pixel, pixels[pixels_index]);
       }
     }
   }
 
-  animator->animate = 1;
   return overflow;
 }
 
