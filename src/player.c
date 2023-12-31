@@ -1,4 +1,5 @@
 #include "player.h"
+#include "globals.h"
 
 player_t player;
 
@@ -23,8 +24,8 @@ void player_movement()
     }
   }
 
-  player.pos.x += player.dir.x * PLAYER_SPEED;
-  player.pos.y += player.dir.y * PLAYER_SPEED;
+  player.pos.x += round(player.dir.x * PLAYER_SPEED);
+  player.pos.y += round(player.dir.y * PLAYER_SPEED);
 }
 
 void player_animation()
@@ -60,12 +61,12 @@ void player_collision()
   if(player_touch('R') == 1||
      player_touch('w') == 1||
      player.pos.x < 0 ||
-     player.pos.x > state.columns * state.tile_size ||
-     player.pos.y < 0 ||
-     player.pos.y > state.rows * state.tile_size)
+     player.pos.x > (state.columns - 1) * state.tile_size ||
+     player.pos.y < 1 ||
+     player.pos.y > (state.rows - 1) * state.tile_size)
   {
-    player.pos.x -= player.dir.x * PLAYER_SPEED;
-    player.pos.y -= player.dir.y * PLAYER_SPEED;
+    player.pos.x -= round(player.dir.x * PLAYER_SPEED);
+    player.pos.y -= round(player.dir.y * PLAYER_SPEED);
   }
 }
 
@@ -73,7 +74,7 @@ void player_load()
 {
   player.width = PLAYER_WIDTH;
   player.height = PLAYER_HEIGHT;
-  player.pos = find_position('p', 0);
+  VECi2_TO_VEC(player.pos, find_position('p', 0)); 
   VECi2_MULTI(player.pos, state.tile_size);
   VECi2(player.dir, 0, 0);
 

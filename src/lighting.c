@@ -1,7 +1,7 @@
 #include "lighting.h"
 #include "globals.h"
 
-i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius, const f32 time)
+i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius)
 {
   i32 overflow = 0;
   u16 temp_pixels[SCREEN_MAX];
@@ -18,7 +18,7 @@ i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius, const 
   SCREEN_CLEAR(state.pixels, SCREEN_MAX);
 
   // add flicker to light
-  if((u32)time % 2 == 0)
+  if((u32)TIME % 2 == 0)
   {
     radius += LIGHT_FLICKER;
   }

@@ -1,3 +1,4 @@
+#include "particle.h"
 #include "state.h"
 #include "texture.h"
 #include "animator.h"
@@ -8,7 +9,7 @@
 #include "corrupt.h"
 
 #define MAP_COUNT 6
-#define CAMERA_SPEED 2
+#define CAMERA_SPEED 64 * DELTA_TIME
 
 i32 main(i32 argc, char *argv[])
 {
@@ -50,9 +51,9 @@ i32 main(i32 argc, char *argv[])
   state.texture = 
     SDL_CreateTexture(
         state.renderer,
-        SDL_PIXELFORMAT_RGBA4444,
+        SDL_PIXELFORMAT_RGBA4444, 
         SDL_TEXTUREACCESS_STREAMING,
-        SCREEN_WIDTH,
+        SCREEN_WIDTH, 
         SCREEN_HEIGHT);
  
   /* map */
@@ -69,22 +70,16 @@ i32 main(i32 argc, char *argv[])
   veci2 camera;
   VECi2(camera, 0, 0);
 
-  /* state */
   state_load(map_src[map_index]);
-
-  /* player */
   player_load();
 
+  /* particles */
+  particle_sim_t player_sim;
+  particle_sim_create(&player_sim, 20);
+
   /* corruption */
-  /* TODO
-   * figure out how to initilze memory for each num
-   */
-  veci2 *corrupts = NULL;
-  corrupts = malloc(sizeof(veci2) * 3);
-  ASSERT(corrupts == NULL, "failed to allocate memory to corrupts\n");
-  u32 corrupt_num = 0;
-  u32 corrupt_time = 0;
-  corrupt_num = corrupt_load(corrupts);
+  corruption_t corruption;
+  corrupt_load(&corruption);
 
   /* font */
   font_t font;
@@ -114,7 +109,6 @@ i32 main(i32 argc, char *argv[])
   animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
   animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
   animator_create(&animations[WATER_ANIM], textures[WATER_TXT], 8, 8, 2);
-  animator_create(&animations[CORRUPTION_ANIM], textures[CORRUPTION_ANIM], 8, 8, 1);
 
 /*
   ######## ##    ## ########  
@@ -125,12 +119,6 @@ i32 main(i32 argc, char *argv[])
   ##       ##   ### ##     ## 
   ######## ##    ## ########  
 */
-
-  f32 time = 0;
-  f32 frame_time = 0;
-  f32 delta_time = 0;
-  u32 previous_time = 0;
-  u32 current_time = 0;
 
   while(!state.quit)
   {
@@ -176,15 +164,15 @@ i32 main(i32 argc, char *argv[])
 */
     }
     
-    previous_time = current_time;
-    current_time = SDL_GetTicks();
-    delta_time = (current_time - previous_time) / 1000.0f;
-    time += delta_time;
-    frame_time += delta_time;
+    PREVIOUS_TIME = CURRENT_TIME;
+    CURRENT_TIME = SDL_GetTicks();
+    DELTA_TIME = (CURRENT_TIME - PREVIOUS_TIME) / 1000.0f;
+    TIME += DELTA_TIME;
+    FRAME_TIME += DELTA_TIME;
 
-    if(frame_time >= (f32) 1 / FRAMERATE) 
+    if(FRAME_TIME >= (f32) 1 / FRAMERATE) 
     {
-      frame_time = 0;
+      FRAME_TIME = 0;
       
 /*
   ##     ## ########  ########     ###    ######## ######## 
@@ -212,58 +200,16 @@ i32 main(i32 argc, char *argv[])
           scanf("%u", &map_index);
           state_load(map_src[map_index]);
           player_load(); 
-          corrupt_num = corrupt_load(corrupts);
+          corrupt_load(&corruption);
           VECi2(camera, 0, 0);
         }
       }
 
-      /* player and girl */
+      /* player and girl */ 
       player_movement();
-      player_animation();
       player_collision();
+      player_animation(); 
 
-      /* animations */
-      animator_update(&animations[GRASS_ANIM], 24);
-      animator_update(&animations[FLOWER_ANIM], 24);
-      animator_update(&animations[WATER_ANIM], 12);
-      animator_update(&animations[CORRUPTION_ANIM], 48);
-
-      /* corruption */
-      corrupt_time++;
-      if(corrupt_num > 0 &&
-         corrupt_time > 48)
-      {
-        corrupt_time = 0;
-        veci2 target = find_position('p', 0);
-
-        for(u32 i = 0; i < corrupt_num; i++)
-        {
-          corrupt_update(&corrupts[i], target);
-        }
-      }
-
-      /* player camera */
-      if(player.pos.x > camera.x + 12 * state.tile_size &&
-         camera.x < (state.columns - 16) * state.tile_size)
-      {
-        camera.x += CAMERA_SPEED;
-      }
-      else if(player.pos.x < camera.x + 4 * state.tile_size &&
-              camera.x > 0)
-      {
-        camera.x -= CAMERA_SPEED;
-      }
-      else if(player.pos.y > camera.y + 12 * state.tile_size &&
-         camera.y < (state.columns - 16) * state.tile_size)
-      {
-        camera.y += CAMERA_SPEED;
-      }
-      else if(player.pos.y < camera.y + 4  * state.tile_size &&
-              camera.y > 0)
-      {
-        camera.y -= CAMERA_SPEED;
-      }
- 
       /* text */
       if(player_touch('T'))
       {
@@ -287,10 +233,43 @@ i32 main(i32 argc, char *argv[])
         map_index++;
         state_load(map_src[map_index]);
         player_load();
-        corrupt_num = corrupt_load(corrupts);
+        corrupt_load(&corruption);
         VECi2(camera, 0, 0);
       }
 
+
+      /* animations */
+      animator_update(&animations[GRASS_ANIM], 1);
+      animator_update(&animations[FLOWER_ANIM], 2);
+      animator_update(&animations[WATER_ANIM], 1);
+
+      /* corruption */
+      veci2 target;
+      VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
+      corrupt_update(&corruption, target);
+
+      /* player camera */
+      if(player.pos.x > camera.x + 12 * state.tile_size &&
+         camera.x < (state.columns - 16) * state.tile_size)
+      {
+        camera.x += round(CAMERA_SPEED);
+      }
+      else if(player.pos.x < camera.x + 4 * state.tile_size &&
+              camera.x > 0)
+      {
+        camera.x -= round(CAMERA_SPEED);
+      }
+      else if(player.pos.y > camera.y + 12 * state.tile_size &&
+         camera.y < (state.columns - 16) * state.tile_size)
+      {
+        camera.y += round(CAMERA_SPEED);
+      }
+      else if(player.pos.y < camera.y + 4  * state.tile_size &&
+              camera.y > 0)
+      {
+        camera.y -= round(CAMERA_SPEED);
+      }
+  
 /*
   ######## ##    ## ########  
   ##       ###   ## ##     ## 
@@ -345,6 +324,14 @@ i32 main(i32 argc, char *argv[])
       player.pos.x - camera.x, 
       player.pos.y - camera.y);
 
+    particle_float(
+        &player_sim, 
+        player.pos.x,
+        player.pos.y,
+        camera,
+        0x00FF,
+        0.1f);
+
    /* girl */
    if(state.girl_show)
    {
@@ -356,11 +343,10 @@ i32 main(i32 argc, char *argv[])
 
     /* lighting */
     flash_light(
-        player.pos.x + PLAYER_WIDTH_2,
-        player.pos.y + PLAYER_HEIGHT_2,
+        player.pos.x + (f32)PLAYER_WIDTH_2,
+        player.pos.y + (f32)PLAYER_HEIGHT_2,
         camera,
-        64,
-        time);
+        64);
 
     /* text */
     if(text_show)
@@ -386,14 +372,19 @@ i32 main(i32 argc, char *argv[])
         NULL);
 
     /* pixel grid lines */
-    SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
+    SDL_SetRenderDrawColor(
+        state.renderer, 
+        0.0f, 
+        0.0f, 
+        0.0f, 
+        0.0f);
+
     for (u32 i = 0; i < SCREEN_HEIGHT; i++) 
     {
       for(u32 j = 0; j < SCALE - 1; j++)
       {
         SDL_RenderDrawLine(
-          state.renderer, 
-          0, 
+          state.renderer, 0, 
           i * SCALE + j, 
           SCREEN_WIDTH * SCALE, 
           i * SCALE + j);
@@ -436,23 +427,11 @@ i32 main(i32 argc, char *argv[])
   texture_destroy(&textures[WATER_TXT]);
   texture_destroy(&textures[GIRL_TXT]);
   texture_destroy(&textures[CORRUPTION_TXT]);
-
-  /* font */
+  
   font_destroy(&font);
-
-  /* state */
   state_destroy();
-
-  /* corrupts */
-  free(corrupts);
-
-  SDL_DestroyRenderer(state.renderer);
-  SDL_DestroyWindow(state.window);
-  SDL_DestroyTexture(state.texture);
-  state.renderer = NULL;
-  state.window = NULL;
-  state.texture = NULL;
-
+  corrupt_destroy(&corruption);
+  particle_sim_destroy(&player_sim);
   SDL_Quit();
 
 /*

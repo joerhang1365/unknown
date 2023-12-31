@@ -13,7 +13,7 @@
 #define SCREEN_HEIGHT 128
 #define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
 #define SCALE 6
-#define FRAMERATE 12
+#define FRAMERATE 24
 
 #define PI 3.1415926535
 #define PI2 PI * 2
@@ -31,6 +31,7 @@ typedef struct { i32 x, y; } veci2;
 
 #define VEC2(v, _x, _y) (v).x = (f32)(_x); (v).y = (f32)(_y);
 #define VECi2(v, _x, _y) (v).x = (i32)(_x); (v).y = (i32)(_y);
+#define VECi2_TO_VEC(v2, vi2) (v2).x = (vi2).x; (v2).y = (vi2).y;
 #define VEC2_MULTI(v, _s) (v).x = (v).x * (f32)_s; (v).y = (v).y * (f32)_s;
 #define VECi2_MULTI(v, _s) (v).x = (v).x * (i32)_s; (v).y = (v).y * (i32)_s;
 
@@ -40,6 +41,12 @@ typedef struct { i32 x, y; } veci2;
     _arr[i] = _arr[i + 1]; \
   } \
   _arr[_size - 1] = _new; \
+
+#define RIGHT_SHIFT(_arr, _size) \
+  for(u32 i = _size; i > 0; i--) \
+  { \
+    _arr[i] = _arr[i - 1]; \
+  }
 
 #define SCREEN_CLEAR(pixels, size) \
   for(u32 i = 0; i < size; i++) \
@@ -60,5 +67,11 @@ typedef struct { i32 x, y; } veci2;
   ((u16)((_a & 0x000F)+ (_a & 0x000F) * (1 - (f32)(_a & 0x000F) / 16.0f)) & 0x000F);
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
+
+extern f32 TIME;
+extern f32 FRAME_TIME;
+extern f32 DELTA_TIME;
+extern u32 PREVIOUS_TIME;
+extern u32 CURRENT_TIME;
 
 #endif

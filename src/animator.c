@@ -9,7 +9,7 @@ void animator_create(animator_t *animator, const texture_t texture_map, const u3
   animator->width = width;
   animator->height = height;
   animator->number_of_frames = number_of_frames;
-  animator->frame = 0;
+  animator->frame = 0.0f;
   animator->index = 0;
 }
 
@@ -18,14 +18,14 @@ void animator_set_index(animator_t *animator, const u32 frame)
   animator->index = frame;
 }
 
-void animator_update(animator_t *animator, const u32 framerate) 
+void animator_update(animator_t *animator, const f32 framerate) 
 {
   animator->index = animator->frame / framerate;
-  ++animator->frame;
+  animator->frame += DELTA_TIME;
 
   if(animator->index > animator->number_of_frames - 1) 
   {
-    animator->frame = 0;
+    animator->frame = 0.0f;
     animator->index = 0;
   }
 }

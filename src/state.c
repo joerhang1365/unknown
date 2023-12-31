@@ -13,6 +13,7 @@ void state_load(const char *source)
   fscanf(in, "girl_show=%hhu\n", &state.girl_show);
  
   /* map */
+  if(state.map != NULL) free(state.map);
   state.map = malloc(sizeof(char) * state.columns * state.rows);
   ASSERT(state.map == NULL, "error allocating memory to map\n");
 
@@ -33,6 +34,7 @@ void state_load(const char *source)
   state.map[index - 1] = '\0';
 
   /* text */
+  if(state.texts != NULL) free(state.texts);
   fscanf(in, "text_size=%u\n", &state.text_size);
   state.texts = malloc(sizeof(text_t) * state.text_size);
   ASSERT(state.texts == NULL, "failed to allocate memory to texts\n");
@@ -55,8 +57,26 @@ void state_load(const char *source)
 
 void state_destroy()
 {
+  SDL_DestroyRenderer(state.renderer);
+  SDL_DestroyWindow(state.window);
+  SDL_DestroyTexture(state.texture);
+  state.renderer = NULL;
+  state.window = NULL;
+  state.texture = NULL;
   free(state.map);
   free(state.texts);
   state.map = NULL;
   state.texts = NULL;
+  state.key = 0;
+  state.quit = 0;
+  state.debug = 0;
+  state.rows = 0;
+  state.columns = 0;
+  state.girl_show = 0;
+  state.text_size = 0;
+  
+  for(u32 i = 0; i < SCREEN_MAX; i++)
+  {
+    state.pixels[i] = 0;
+  }
 }

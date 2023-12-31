@@ -41,7 +41,7 @@ static inline char get_type(const u32 column, const u32 row)
 
 static inline byte is_type(const f32 x, const f32 y, const char c)
 {
-  char tile = get_type(x / state.tile_size, y / state.tile_size);
+  char tile = get_type(floor(x / state.tile_size), floor(y / state.tile_size));
   return (tile == c);
 }
 

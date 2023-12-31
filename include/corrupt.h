@@ -6,8 +6,16 @@
 
 #define CORRUPT_TIME 4
 
-/* returns new corrupt number */
-u32 corrupt_load(veci2 *corrupts);
-void corrupt_update(veci2 *corrupt, const veci2 target);
+typedef veci2 corrupt_t;
+
+typedef struct
+{
+  corrupt_t *corrupts;
+  u32 count;
+} corruption_t;
+
+void corrupt_load(corruption_t *corruption);
+void corrupt_update(corruption_t *corruption, const veci2 target);
+void corrupt_destroy(corruption_t *corruption);
 
 #endif

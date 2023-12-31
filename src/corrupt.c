@@ -1,60 +1,71 @@
 #include "corrupt.h"
 #include "globals.h"
 
-u32 corrupt_load(veci2 *corrupts)
+void corrupt_load(corruption_t *corruption)
 {
-  u32 corrupt_num = 0;
-  
+  u32 count = 0;
+
   for(u32 i = 0; i < state.columns * state.rows; i++)
   {
     if(state.map[i] == 'C')
     {
-      corrupt_num++;
+      count++;
     }
   }
 
-  if(corrupt_num > 0)
+  //if(corruption->corrupts != NULL) free(corruption->corrupts);
+  corruption->corrupts = malloc(sizeof(corrupt_t) * count);
+  ASSERT(corruption->corrupts == NULL, "failed to allocate memory for corrupts\n");
+
+  if(count > 0)
   {
-    for(u32 i = 0; i < corrupt_num; i++)
+    for(u32 i = 0; i < count; i++)
     {
-      corrupts[i] = find_position('C', i);
+      corruption->corrupts[i] = find_position('C', i);
     }
   }
 
-  return corrupt_num;
+  corruption->count = count;
 }
 
-void corrupt_update(veci2 *corruption, const veci2 target)
+static f32 last_update_time = 0;
+
+void corrupt_update(corruption_t *corruption, const veci2 target)
 {
-  // set current char to blank
-  state.map[corruption->y * state.columns + corruption->x] = ' ';
+  if(TIME - last_update_time < CORRUPT_TIME) return;
+  last_update_time = TIME;
+
+  for(u32 i = 0; i < corruption->count; i++)
+  {
+    i32 x = corruption->corrupts[i].x;
+    i32 y = corruption->corrupts[i].y;
+    // set current char to blank
+    state.map[y * state.columns + x] = ' ';
   
-  // find dir to target
-  veci2 dif;
-  VECi2(dif, abs(target.x - corruption->x), abs(target.y - corruption->y));
+    // find dir to target
+    veci2 dif;
+    VECi2(dif, abs(target.x - x), abs(target.y - y));
 
-  if(dif.x >= dif.y)
-  {
-    if(target.x > corruption->x)
+    if(dif.x >= dif.y)
     {
-      corruption->x++;
+      if(target.x > x) x++;
+      else x--;
     }
-    else
+    else if(dif.x < dif.y)
     {
-      corruption->x--;
+      if(target.y > y) y++;
+      else y--;
     }
-  }
-  else if(dif.x < dif.y)
-  {
-    if(target.y > corruption->y)
-    {
-      corruption->y++;
-    }
-    else
-    {
-      corruption->y--;
-    }
-  }
 
-  state.map[corruption->y * state.columns + corruption->x] = 'C';
+    state.map[y * state.columns + x] = 'C';
+    corruption->corrupts[i].x = x;
+    corruption->corrupts[i].y = y;
+  }
+}
+
+void corrupt_destroy(corruption_t *corruption)
+{
+  free(corruption->corrupts);
+  corruption->corrupts = NULL;
+  corruption->count = 0;
 }

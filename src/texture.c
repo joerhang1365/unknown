@@ -14,6 +14,7 @@ i32 texture_create(const char *source, texture_t *texture)
   fscanf(image, "height=%i\n", &height);
   fscanf(image, "bytes_per_pixel=%i\n", &bytes_per_pixel);
 
+  if(texture->pixels != NULL) free(texture->pixels);
   texture->pixels = (u16*) malloc(sizeof(u32) * width * height);
   ASSERT(texture->pixels == NULL, "error allocating memory to pixels\n");
 

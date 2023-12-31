@@ -7,6 +7,6 @@
 #define LIGHT_ACCURACY 360
 #define LIGHT_FLICKER 5
 
-i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius, const f32 time);
+i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius);
 
 #endif

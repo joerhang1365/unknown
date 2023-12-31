@@ -17,7 +17,7 @@ girl_show=0
 "        t                       "
 "   R    t                       "
 "        t         g             "
-"        t                f      "
+"        t               Tf      "
 "        t                       "
 "        t                       "
 "        t                       "
@@ -32,8 +32,9 @@ girl_show=0
 "        ttttttttttttttttttttttt>"
 "                g               "
 "    g                      g    "
-"                      T         "
+"                                "
 "                 R              "
-text_size=1
+text_size=2
 you are not ready
 for what is ahead;
+give up;
