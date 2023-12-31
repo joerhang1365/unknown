@@ -234,11 +234,10 @@ i32 main(i32 argc, char *argv[])
          corrupt_time > 48)
       {
         corrupt_time = 0;
-        veci2 target;
+        veci2 target = find_position('p', 0);
 
         for(u32 i = 0; i < corrupt_num; i++)
         {
-          VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
           corrupt_update(&corrupts[i], target);
         }
       }
@@ -249,7 +248,7 @@ i32 main(i32 argc, char *argv[])
       {
         camera.x += CAMERA_SPEED;
       }
-      else if(player.pos.x < camera.x -4 * state.tile_size &&
+      else if(player.pos.x < camera.x + 4 * state.tile_size &&
               camera.x > 0)
       {
         camera.x -= CAMERA_SPEED;
@@ -259,7 +258,7 @@ i32 main(i32 argc, char *argv[])
       {
         camera.y += CAMERA_SPEED;
       }
-      else if(player.pos.y < camera.y -4  * state.tile_size &&
+      else if(player.pos.y < camera.y + 4  * state.tile_size &&
               camera.y > 0)
       {
         camera.y -= CAMERA_SPEED;
@@ -356,12 +355,9 @@ i32 main(i32 argc, char *argv[])
    }
 
     /* lighting */
-    /* TODO
-     * fix light stopping on solid types
-     */
     flash_light(
-        player.pos.x,
-        player.pos.y,
+        player.pos.x + PLAYER_WIDTH_2,
+        player.pos.y + PLAYER_HEIGHT_2,
         camera,
         64,
         time);
@@ -393,7 +389,7 @@ i32 main(i32 argc, char *argv[])
     SDL_SetRenderDrawColor(state.renderer, 0.0f, 0.0f, 0.0f, 0.0f);
     for (u32 i = 0; i < SCREEN_HEIGHT; i++) 
     {
-      for(u32 j = 0; j < 4; j++)
+      for(u32 j = 0; j < SCALE - 1; j++)
       {
         SDL_RenderDrawLine(
           state.renderer, 

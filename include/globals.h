@@ -16,6 +16,7 @@
 #define FRAMERATE 12
 
 #define PI 3.1415926535
+#define PI2 PI * 2
 
 typedef int16_t  i16;
 typedef uint16_t u16;
@@ -56,7 +57,7 @@ typedef struct { i32 x, y; } veci2;
   ((u16)(((_a & 0xF000) * (_a & 0x000F) + (_b & 0xF000) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0xF000) + \
   ((u16)(((_a & 0x0F00) * (_a & 0x000F) + (_b & 0x0F00) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x0F00) + \
   ((u16)(((_a & 0x00F0) * (_a & 0x000F) + (_b & 0x00F0) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x00F0) +  \
-  ((u16)((_a & 0x000F)+ (_a & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) & 0x000F);
+  ((u16)((_a & 0x000F)+ (_a & 0x000F) * (1 - (f32)(_a & 0x000F) / 16.0f)) & 0x000F);
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
 
