@@ -17,7 +17,6 @@ void player_load()
   player.width = PLAYER_WIDTH;
   player.height = PLAYER_HEIGHT;
   VECi2_TO_VEC(player.pos, find_position('p', 0)); 
-  VECi2_MULTI(player.pos, state.tile_size);
   VECi2(player.dir, 0, 0);
 
   /* set all prev_pos to current pos */

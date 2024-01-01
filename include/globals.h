@@ -74,4 +74,6 @@ extern f32 DELTA_TIME;
 extern u32 PREVIOUS_TIME;
 extern u32 CURRENT_TIME;
 
+extern veci2 camera;
+
 #endif

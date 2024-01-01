@@ -10,7 +10,7 @@ void particle_sim_create(particle_sim_t *sim, u32 capacity)
 
 static f32 last_update_time = 0.0f;
 
-i32 particle_float(particle_sim_t *sim, i32 x, i32 y, veci2 camera, u16 color, f32 update_time)
+i32 particle_float(particle_sim_t *sim, i32 x, i32 y, u16 color, f32 update_time)
 {
   if(TIME - last_update_time >= update_time)
   {

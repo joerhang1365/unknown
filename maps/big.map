@@ -1,6 +1,7 @@
 columns=32
 rows=32
 tile_size=8
+background_color=080F
 girl_show=0
 "                                "
 "                          g     " 
@@ -25,7 +26,7 @@ girl_show=0
 "        t        g              "
 "        t                       "
 "        t             g         "
-"        t                       "
+"wwwwwwwwWwwwwwwwwwwwwwwwwwwwwwww"
 "wwwwwwwwWwwwwwwwwwwwwwwwwwwwwwww"
 "        t                       "
 "        t                       "

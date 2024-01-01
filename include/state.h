@@ -21,6 +21,7 @@ typedef struct
   u32 rows;
   u32 tile_size;
   char *map;
+  u16 background_color;
   byte girl_show;
 
   /* text */
@@ -60,6 +61,7 @@ static inline veci2 find_position(const char c, const u32 instance_num)
         if(instance == instance_num)
         {
           VECi2(temp, i, j);
+          VECi2_MULTI(temp, state.tile_size);
           break;
         }
         instance++;

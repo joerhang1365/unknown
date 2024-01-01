@@ -68,7 +68,6 @@ i32 main(i32 argc, char *argv[])
   map_src[6] = "maps/restart.map";
 
   /* camera */
-  veci2 camera;
   VECi2(camera, 0, 0);
 
   state_load(map_src[map_index]);
@@ -81,7 +80,6 @@ i32 main(i32 argc, char *argv[])
   /* corruption */
   corruption_t corruption;
   corrupt_load(&corruption);
-  f32 corrupt_last_update = 0;
 
   /* font */
   font_t font;
@@ -298,9 +296,9 @@ i32 main(i32 argc, char *argv[])
       }
 
       /* animations */
-      animator_update(&animations[GRASS_ANIM], 1);
-      animator_update(&animations[FLOWER_ANIM], 2);
-      animator_update(&animations[WATER_ANIM], 1);
+      animator_update(&animations[GRASS_ANIM], 0.5f);
+      animator_update(&animations[FLOWER_ANIM], 2.0f);
+      animator_update(&animations[WATER_ANIM], 0.25f);
 
       /* player camera */
       if(player.pos.x > camera.x + 12 * state.tile_size &&
@@ -327,44 +325,8 @@ i32 main(i32 argc, char *argv[])
       /* corruption */
       veci2 target;
       VECi2(target, player.pos.x, player.pos.y);
+      corrupt_update(&corruption, target);
 
-      if(TIME - corrupt_last_update > CORRUPT_TIME)
-      {
-        corrupt_last_update = TIME;
-
-        for(u32 i = 0; i < corruption.count; i++)
-        {
-          i32 corrupt_x = corruption.corrupts[i].x;
-          i32 corrupt_y = corruption.corrupts[i].y;
-
-          // remove char from map
-          state.map[
-            corrupt_y / state.tile_size * state.columns +
-            corrupt_x / state.tile_size] = ' ';
-  
-          // find dir to target
-          veci2 dif;
-          VECi2(dif, abs(target.x - corrupt_x), abs(target.y - corrupt_y));
-
-          if(dif.x >= dif.y)
-          {
-            if(target.x > corrupt_x) corrupt_x += CORRUPT_SPEED;
-            else corrupt_x -= CORRUPT_SPEED;
-          }
-          else if(dif.x < dif.y)
-          {
-            if(target.y > corrupt_y) corrupt_y += CORRUPT_SPEED;
-            else corrupt_y -= CORRUPT_SPEED;
-          }
-
-          state.map[
-            corrupt_y / state.tile_size * state.columns +
-            corrupt_x / state.tile_size] = 'C';
-
-          corruption.corrupts[i].x = corrupt_x;
-          corruption.corrupts[i].y = corrupt_y;
-        }
-      }  
 /*
   ######## ##    ## ########  
   ##       ###   ## ##     ## 
@@ -389,6 +351,11 @@ i32 main(i32 argc, char *argv[])
     SCREEN_CLEAR(state.pixels, SCREEN_MAX);
 
     /* map */
+    for(u32 i = 0; i < SCREEN_MAX; i++)
+    {
+      state.pixels[i] = state.background_color;
+    }
+
     for(u32 i = camera.y / state.tile_size; i < state.columns; i++)
     {
       for(u32 j = camera.x / state.tile_size; j < state.rows; j++)
@@ -423,7 +390,6 @@ i32 main(i32 argc, char *argv[])
         &player_float_sim, 
         player.pos.x,
         player.pos.y,
-        camera,
         0x00FF,
         0.1f);
 
@@ -439,8 +405,7 @@ i32 main(i32 argc, char *argv[])
     /* lighting */
     flash_light(
         player.pos.x + (f32)PLAYER_WIDTH_2,
-        player.pos.y + (f32)PLAYER_HEIGHT_2,
-        camera,
+        player.pos.y + (f32)PLAYER_HEIGHT_2, 
         64);
 
     /* corruption glow */
@@ -448,8 +413,7 @@ i32 main(i32 argc, char *argv[])
     {
       glow(
           corruption.corrupts[i].x,
-          corruption.corrupts[i].y,
-          camera,
+          corruption.corrupts[i].y, 
           textures[CORRUPTION_TXT]);
     }
 

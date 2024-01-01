@@ -1,5 +1,6 @@
 #include "animator.h"
 #include "globals.h"
+#include "texture.h"
 
 animator_t animations[ANIMATION_MAX];
 
@@ -28,6 +29,25 @@ void animator_update(animator_t *animator, const f32 framerate)
     animator->frame = 0.0f;
     animator->index = 0;
   }
+}
+
+texture_t animator_to_texture(const animator_t animator)
+{
+  texture_t temp = animator.texture_map;
+  temp.width = animator.width;
+  temp.height = animator.height;
+  temp.bytes_per_pixel = animator.texture_map.bytes_per_pixel;
+
+  for(u32 i = 0; i < animator.height; i++)
+  {
+    for(u32 j = 0; j < animator.width; j++)
+    {
+      temp.pixels[i * animator.width + j] = animator.texture_map.pixels[
+        i * animator.texture_map.width + j + animator.width * animator.index];
+    }
+  }
+
+  return temp;
 }
 
 i32 animator_add(animator_t *animator, const i32 x, const i32 y)

@@ -16,6 +16,7 @@ typedef struct
 } corruption_t;
 
 void corrupt_load(corruption_t *corruption);
+void corrupt_update(corruption_t * corruption, veci2 target);
 void corrupt_destroy(corruption_t *corruption);
 
 #endif

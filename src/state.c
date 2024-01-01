@@ -10,6 +10,7 @@ void state_load(const char *source)
   fscanf(in, "columns=%u\n", &state.columns);
   fscanf(in, "rows=%u\n", &state.rows);
   fscanf(in, "tile_size=%u\n", &state.tile_size);
+  fscanf(in, "background_color=%x\n", (u32*)&state.background_color);
   fscanf(in, "girl_show=%hhu\n", &state.girl_show);
  
   /* map */
@@ -74,6 +75,7 @@ void state_destroy()
   state.columns = 0;
   state.girl_show = 0;
   state.text_size = 0;
+  state.background_color = 0;
   
   for(u32 i = 0; i < SCREEN_MAX; i++)
   {
