@@ -47,17 +47,11 @@ i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y)
     if(text.message[i] == '\n')
     {
       row++;
-      offset += i + 1;
+      offset = i + 1;
       value = 0;
     }
-    else if(text.message[i] == ' ')
-    {
-      value = 0;
-    }
-    else 
-    {
-      value = text.message[i] - 'a' + 1;
-    }
+    else if(text.message[i] == ' ') value = 0;
+    else value = text.message[i] - 'a' + 1;
 
     for(u32 j = 0; j < font.height; j++)
     {
@@ -68,14 +62,8 @@ i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y)
         overflow = pixels_index > SCREEN_MAX;
         u32 pixel;
 
-        if(data > 0x7) // this only works for width 4
-        {
-          pixel = font.color;
-        }
-        else
-        {
-          pixel = state.pixels[pixels_index];
-        }
+        if(data > 0x7) pixel = font.color; // this only works for width 4
+        else pixel = state.pixels[pixels_index];
         
         // left shift and only store last 4 bits
         data = (data << 1) & 0xF;

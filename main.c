@@ -8,7 +8,7 @@
 #include "lighting.h"
 #include "corrupt.h"
 
-#define MAP_COUNT 6
+#define MAP_COUNT 7
 #define CAMERA_SPEED 64 * DELTA_TIME
 
 i32 main(i32 argc, char *argv[])
@@ -65,6 +65,7 @@ i32 main(i32 argc, char *argv[])
   map_src[3] = "maps/big.map";
   map_src[4] = "maps/meeting.map";
   map_src[5] = "maps/corruption.map";
+  map_src[6] = "maps/restart.map";
 
   /* camera */
   veci2 camera;
@@ -74,12 +75,13 @@ i32 main(i32 argc, char *argv[])
   player_load();
 
   /* particles */
-  particle_sim_t player_sim;
-  particle_sim_create(&player_sim, 20);
+  particle_sim_t player_float_sim;
+  particle_sim_create(&player_float_sim, 16);
 
   /* corruption */
   corruption_t corruption;
   corrupt_load(&corruption);
+  f32 corrupt_last_update = 0;
 
   /* font */
   font_t font;
@@ -205,10 +207,58 @@ i32 main(i32 argc, char *argv[])
         }
       }
 
-      /* player and girl */ 
-      player_movement();
-      player_collision();
-      player_animation(); 
+      /* player movement */ 
+      player.dir.x = 0;
+      player.dir.y = 0;
+
+      if(state.key != NONE)
+      {
+        switch(state.key)
+        {
+          case LEFT: player.dir.x = -1; break;
+          case RIGHT: player.dir.x = 1; break;
+          case UP: player.dir.y = -1; break;
+          case DOWN: player.dir.y = 1; break;
+          default: player.dir.x = 0; player.dir.y = 0;
+        }
+        if(state.girl_show == 1)
+        {     
+          LEFT_SHIFT(player.prev_pos, player.pos, PLAYER_PREVIOUS);
+        }
+      }
+
+      player.pos.x += round(player.dir.x * PLAYER_SPEED);
+      player.pos.y += round(player.dir.y * PLAYER_SPEED);
+
+      /* player collision */
+      if(player_touch('R') == 1 ||
+         player_touch('w') == 1 ||
+         player_touch('G') == 1 ||
+         player.pos.x < 0 ||
+         player.pos.x > (state.columns - 1) * state.tile_size ||
+         player.pos.y < 1 ||
+         player.pos.y > (state.rows - 1) * state.tile_size)
+      {
+        player.pos.x -= round(player.dir.x * PLAYER_SPEED);
+        player.pos.y -= round(player.dir.y * PLAYER_SPEED);
+      }
+
+      /* player animation */
+      if(state.key != NONE)
+      {
+        switch(state.key)
+        {
+          case LEFT: animator_set_index(&animations[PLAYER_ANIM], 2); break;
+          case RIGHT: animator_set_index(&animations[PLAYER_ANIM], 1); break;
+          case UP: animator_set_index(&animations[PLAYER_ANIM], 3); break;
+          case DOWN: animator_set_index(&animations[PLAYER_ANIM], 4); break;
+          default: animator_set_index(&animations[PLAYER_ANIM], 0);
+        }
+      }
+      else
+      {
+        animator_set_index(&animations[PLAYER_ANIM], 0);
+      }
 
       /* text */
       if(player_touch('T'))
@@ -237,16 +287,20 @@ i32 main(i32 argc, char *argv[])
         VECi2(camera, 0, 0);
       }
 
+      /* restart */
+      if(player_touch('C'))
+      {
+        map_index = 0;
+        state_load(map_src[MAP_COUNT - 1]);
+        player_load();
+        corrupt_load(&corruption);
+        VECi2(camera, 0, 0);
+      }
 
       /* animations */
       animator_update(&animations[GRASS_ANIM], 1);
       animator_update(&animations[FLOWER_ANIM], 2);
       animator_update(&animations[WATER_ANIM], 1);
-
-      /* corruption */
-      veci2 target;
-      VECi2(target, player.pos.x / state.tile_size, player.pos.y / state.tile_size);
-      corrupt_update(&corruption, target);
 
       /* player camera */
       if(player.pos.x > camera.x + 12 * state.tile_size &&
@@ -269,7 +323,48 @@ i32 main(i32 argc, char *argv[])
       {
         camera.y -= round(CAMERA_SPEED);
       }
+
+      /* corruption */
+      veci2 target;
+      VECi2(target, player.pos.x, player.pos.y);
+
+      if(TIME - corrupt_last_update > CORRUPT_TIME)
+      {
+        corrupt_last_update = TIME;
+
+        for(u32 i = 0; i < corruption.count; i++)
+        {
+          i32 corrupt_x = corruption.corrupts[i].x;
+          i32 corrupt_y = corruption.corrupts[i].y;
+
+          // remove char from map
+          state.map[
+            corrupt_y / state.tile_size * state.columns +
+            corrupt_x / state.tile_size] = ' ';
   
+          // find dir to target
+          veci2 dif;
+          VECi2(dif, abs(target.x - corrupt_x), abs(target.y - corrupt_y));
+
+          if(dif.x >= dif.y)
+          {
+            if(target.x > corrupt_x) corrupt_x += CORRUPT_SPEED;
+            else corrupt_x -= CORRUPT_SPEED;
+          }
+          else if(dif.x < dif.y)
+          {
+            if(target.y > corrupt_y) corrupt_y += CORRUPT_SPEED;
+            else corrupt_y -= CORRUPT_SPEED;
+          }
+
+          state.map[
+            corrupt_y / state.tile_size * state.columns +
+            corrupt_x / state.tile_size] = 'C';
+
+          corruption.corrupts[i].x = corrupt_x;
+          corruption.corrupts[i].y = corrupt_y;
+        }
+      }  
 /*
   ######## ##    ## ########  
   ##       ###   ## ##     ## 
@@ -318,28 +413,28 @@ i32 main(i32 argc, char *argv[])
       }
     }
 
-    /* player and girl */
+    /* player */
     animator_add(
       &animations[PLAYER_ANIM], 
       player.pos.x - camera.x, 
       player.pos.y - camera.y);
 
     particle_float(
-        &player_sim, 
+        &player_float_sim, 
         player.pos.x,
         player.pos.y,
         camera,
         0x00FF,
         0.1f);
 
-   /* girl */
-   if(state.girl_show)
-   {
-     texture_add(
-        textures[GIRL_TXT], 
-        player.prev_pos[0].x - camera.x,
-        player.prev_pos[0].y - camera.y);
-   }
+    /* girl */
+    if(state.girl_show)
+    {
+      texture_add(
+         textures[GIRL_TXT], 
+         player.prev_pos[0].x - camera.x,
+         player.prev_pos[0].y - camera.y);
+    }
 
     /* lighting */
     flash_light(
@@ -347,6 +442,16 @@ i32 main(i32 argc, char *argv[])
         player.pos.y + (f32)PLAYER_HEIGHT_2,
         camera,
         64);
+
+    /* corruption glow */
+    for(u32 i = 0; i < corruption.count; i++)
+    {
+      glow(
+          corruption.corrupts[i].x,
+          corruption.corrupts[i].y,
+          camera,
+          textures[CORRUPTION_TXT]);
+    }
 
     /* text */
     if(text_show)
@@ -415,7 +520,7 @@ i32 main(i32 argc, char *argv[])
   ########  ########  ######     ##    ##     ##  #######     ##    
 */
 
-  /* textures */
+  /* texture */
   texture_destroy(&textures[PLAYER_TXT]);
   texture_destroy(&textures[TILE_TXT]);
   texture_destroy(&textures[BLANK_TXT]);
@@ -431,7 +536,7 @@ i32 main(i32 argc, char *argv[])
   font_destroy(&font);
   state_destroy();
   corrupt_destroy(&corruption);
-  particle_sim_destroy(&player_sim);
+  particle_sim_destroy(&player_float_sim);
   SDL_Quit();
 
 /*

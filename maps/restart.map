@@ -1,0 +1,29 @@
+columns=16
+rows=16
+tile_size=8
+girl_show=0
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"p      T       >"
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+"                "
+text_size=4
+you died;
+you want to give 
+up;
+but something is 
+tugging at your 
+heart;
+do you want to 
+continue;

@@ -1,5 +1,6 @@
 #include "lighting.h"
 #include "globals.h"
+#include "texture.h"
 
 i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius)
 {
@@ -63,6 +64,26 @@ i32 flash_light(const i32 x, const i32 y, const veci2 camera, u32 radius)
 
   // pos pixel does not automaticy get rendered for sum reason
   state.pixels[y_adj * SCREEN_WIDTH + x_adj] = temp_pixels[y_adj * SCREEN_WIDTH + x_adj];
+
+  return overflow;
+}
+
+i32 glow(const i32 x, const i32 y, const veci2 camera, texture_t texture)
+{
+  i32 overflow = 0;
+  u32 alpha = fabs(sinf(TIME) * 16.0f);
+
+  // change texture alpha value
+  for(u32 i = 0; i < texture.width * texture.height; i++)
+  {
+    if(texture.pixels[i] != 0x0000)
+    {
+      texture.pixels[i] = texture.pixels[i] & 0xFFF0;
+      texture.pixels[i] = texture.pixels[i] + alpha;
+    }
+  }
+
+  overflow = texture_add(texture, x - camera.x, y - camera.y);
 
   return overflow;
 }

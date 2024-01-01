@@ -10,7 +10,7 @@
 #define PLAYER_WIDTH_2 PLAYER_WIDTH / 2
 #define PLAYER_HEIGHT_2 PLAYER_HEIGHT / 2
 #define PLAYER_SPEED 64 * DELTA_TIME
-#define PLAYER_PREVIOUS 8
+#define PLAYER_PREVIOUS 16
 
 typedef struct
 {
@@ -24,10 +24,7 @@ typedef struct
 /* global */
 extern player_t player;
 
-void player_movement();
-void player_animation();
 byte player_touch(char c);
-void player_collision();
 void player_load();
 
 #endif
