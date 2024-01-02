@@ -27,7 +27,6 @@ typedef struct
   /* text */
   u32 text_size;
   text_t *texts;
-
 } state_t;
 
 extern state_t state;
@@ -51,14 +50,14 @@ static inline veci2 find_position(const char c, const u32 instance_num)
   u32 instance = 0;
   veci2 temp;
   VECi2(temp, 0, 0);
-  for(u32 i = 0; i < state.columns; i++)
+  for (u32 i = 0; i < state.columns; i++)
   {
-    for(u32 j = 0; j < state.rows; j++)
+    for (u32 j = 0; j < state.rows; j++)
     {
       char tile = get_type(i, j);
-      if(tile == c)
+      if (tile == c)
       {
-        if(instance == instance_num)
+        if (instance == instance_num)
         {
           VECi2(temp, i, j);
           VECi2_MULTI(temp, state.tile_size);
@@ -68,6 +67,7 @@ static inline veci2 find_position(const char c, const u32 instance_num)
       }
     }
   }
+
   return temp;
 }
 

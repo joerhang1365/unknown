@@ -14,7 +14,9 @@ typedef struct
   u32 bytes_per_pixel;
 } texture_t;
 
-enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT, FLOWER_TXT, WOOD_TXT, T_TXT, NEXT_TXT, PLAYER_TXT, P_TXT, ROCK_TXT, WATER_TXT, GIRL_TXT, CORRUPTION_TXT };
+enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT, FLOWER_TXT, WOOD_TXT, T_TXT, 
+                NEXT_TXT, PLAYER_TXT, P_TXT, ROCK_TXT, WATER_TXT, GIRL_TXT, 
+                CORRUPTION_TXT };
 
 extern texture_t textures[TEXTURE_MAX];
 

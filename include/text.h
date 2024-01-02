@@ -3,7 +3,7 @@
 
 #include "globals.h"
 
-typedef struct
+typedef struct 
 {
   u32 *data;
   u32 width;
@@ -14,7 +14,7 @@ typedef struct
 void font_create(font_t *font, const u16 color, const char *source);
 void font_destroy(font_t *font);
 
-typedef struct
+typedef struct 
 {
   char message[128];
   i32 length;
