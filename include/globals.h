@@ -29,11 +29,29 @@ typedef unsigned char byte;
 typedef struct { f32 x, y; } vec2;
 typedef struct { i32 x, y; } veci2;
 
-#define VEC2(v, _x, _y) (v).x = (f32)(_x); (v).y = (f32)(_y);
-#define VECi2(v, _x, _y) (v).x = (i32)(_x); (v).y = (i32)(_y);
-#define VECi2_TO_VEC(v2, vi2) (v2).x = (vi2).x; (v2).y = (vi2).y;
-#define VEC2_MULTI(v, _s) (v).x = (v).x * (f32)_s; (v).y = (v).y * (f32)_s;
-#define VECi2_MULTI(v, _s) (v).x = (v).x * (i32)_s; (v).y = (v).y * (i32)_s;
+static inline vec2 vec2_create(const f32 x, const f32 y)
+{
+  vec2 temp;
+  temp.x = x;
+  temp.y = y;
+  return temp;
+}
+
+static inline veci2 veci2_create(const i32 x, const i32 y)
+{
+  veci2 temp;
+  temp.x = x;
+  temp.y = y;
+  return temp;
+}
+
+static inline veci2 vec2_to_veci2(const vec2 vec2)
+{
+  return veci2_create(vec2.x, vec2.y);
+}
+
+#define VEC2_SCALE(v, _s) (v).x = (v).x * (f32)_s; (v).y = (v).y * (f32)_s;
+#define VECI2_SCALE(v, _s) (v).x = (v).x * (i32)_s; (v).y = (v).y * (i32)_s;
 
 #define LEFT_SHIFT(_arr, _new, _size) \
   for(u32 i = 0; i < _size - 1; i++) \
@@ -65,6 +83,15 @@ typedef struct { i32 x, y; } veci2;
   ((u16)(((_a & 0x0F00) * (_a & 0x000F) + (_b & 0x0F00) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x0F00) + \
   ((u16)(((_a & 0x00F0) * (_a & 0x000F) + (_b & 0x00F0) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x00F0) +  \
   ((u16)((_a & 0x000F)+ (_a & 0x000F) * (1 - (f32)(_a & 0x000F) / 16.0f)) & 0x000F);
+
+static inline byte is_valid_pixel(const u32 max, const u32 width, 
+                                  const u32 height, const u32 index, 
+                                  const i32 x, const i32 y)
+{
+  return index >= 0 && index < max &&
+         x >= 0 && x < width &&
+         y >= 0 && y < height;
+}
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
 

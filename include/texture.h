@@ -20,8 +20,8 @@ enum TEXTURES { TILE_TXT, BLANK_TXT, GRASS_TXT, FLOWER_TXT, WOOD_TXT, T_TXT,
 
 extern texture_t textures[TEXTURE_MAX];
 
-i32 texture_create(const char *source, texture_t *texture);
-i32 texture_add(texture_t texture, const i32 x, const i32 y);
-void texture_destroy(texture_t *texture);
+i32 texture_create(const char *source, const u32 type);
+i32 texture_render(const i32 x, const i32 y, const u32 type);
+void texture_destroy(const u32 type);
 
 #endif

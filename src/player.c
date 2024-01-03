@@ -1,5 +1,6 @@
 #include "player.h"
 #include "globals.h"
+#include "state.h"
 
 player_t player;
 
@@ -16,8 +17,8 @@ void player_load()
 {
   player.width = PLAYER_WIDTH;
   player.height = PLAYER_HEIGHT;
-  VECi2_TO_VEC(player.pos, find_position('p', 0));
-  VECi2(player.dir, 0, 0);
+  player.pos = find_position('p', 0);
+  player.dir = veci2_create(0, 0);
 
   /* set all prev_pos to current pos */
   for (u32 i = 0; i < PLAYER_PREVIOUS; i++) 

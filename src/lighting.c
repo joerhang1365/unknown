@@ -1,11 +1,11 @@
 #include "lighting.h"
+#include "globals.h"
 #include "texture.h"
 
 i32 flash_light(const i32 x, const i32 y, u32 radius) 
 {
   i32 overflow = 0;
   u16 temp_pixels[SCREEN_MAX];
-
   // copy all the pixels
   for (u32 i = 0; i < SCREEN_MAX; i++) 
   {
@@ -18,7 +18,7 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
   // add flicker to light
   if ((u32)TIME % 2 == 0) radius += LIGHT_FLICKER;
 
-  for (f32 theta = 0; theta < PI2; theta += (f32)PI / LIGHT_ACCURACY) 
+  for (f32 theta = 0; theta < PI2; theta += (f32) PI / LIGHT_ACCURACY) 
   {
     byte solid = 0;
 
@@ -27,12 +27,10 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
       const i32 cylindrical_x = r * cosf(theta) + x - camera.x;
       const i32 cylindrical_y = r * sinf(theta) + y - camera.y;
       const i32 pixels_index = cylindrical_y * SCREEN_WIDTH + cylindrical_x;
-      overflow = pixels_index > SCREEN_MAX;
-
+  
       // is in screen boundary
-      if (pixels_index >= 0 && overflow == 0 && cylindrical_x >= 0 &&
-          cylindrical_x < SCREEN_WIDTH && cylindrical_y >= 0 &&
-          cylindrical_y < SCREEN_HEIGHT) 
+      if(is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT, 
+                        pixels_index, cylindrical_x, cylindrical_y))
       {
         // check if type is solid
         // if so wait until type is no longer solid then break
@@ -44,15 +42,9 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
         // making shadows pixel accurate and shit
         switch (type) 
         {
-        case 'R':
-          texture = textures[ROCK_TXT];
-          break;
-        case 'G':
-          texture = textures[GIRL_TXT];
-          break;
-        default:
-          texture = textures[BLANK_TXT];
-          break;
+        case 'R': texture = textures[ROCK_TXT]; break;
+        case 'G': texture = textures[GIRL_TXT]; break;
+        default: texture = textures[BLANK_TXT]; break;
         }
 
         const u16 texture_pixel =
@@ -68,7 +60,7 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
         state.pixels[pixels_index] = temp_pixels[pixels_index];
 
         // adjust transparency the further from light source
-        state.pixels[pixels_index] = state.pixels[pixels_index] & 0xFFF0;
+        state.pixels[pixels_index] &= 0xFFF0;
         state.pixels[pixels_index] += (u16)(16.0f * (1.0f - (f32)r / radius));
         ALPHA_BLEND(state.pixels[pixels_index]);
       }
@@ -82,32 +74,35 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
   return overflow;
 }
 
-i32 glow(const i32 x, const i32 y, texture_t texture) 
+i32 glow(const i32 x, const i32 y, const u32 type) 
 {
   i32 overflow = 0;
   u16 alpha = fabs(sinf(TIME) * 16.0f);
+  alpha &= 0x000F; // make sure between 0 and 15
+  const texture_t texture = textures[type];
 
-  // change texture alpha value
   for (u32 i = 0; i < texture.height; i++) 
   {
     for (u32 j = 0; j < texture.width; j++) 
     {
+      const u32 pixels_index = (y + i) * SCREEN_WIDTH + x + j;
       const u32 texture_index = i * texture.width + j;
-      const u32 pixels_index =
-          (y - camera.y + i) * SCREEN_WIDTH + x - camera.x + j;
-      if (texture.pixels[texture_index] != 0x0000) {
-        // check if current alpha is greater than alpha
-        u16 current_alpha = state.pixels[pixels_index] & 0x000F;
-        if (current_alpha > alpha) alpha = current_alpha;
-        // clear current alpha
-        texture.pixels[texture_index] = texture.pixels[texture_index] & 0xFFF0;
-        // update current alpha
-        texture.pixels[texture_index] = texture.pixels[texture_index] + alpha;
+
+      // check if is on screen
+      if (texture.pixels[texture_index] != 0x0000 && 
+          is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT,
+                         pixels_index, (x + j), (y + i)))
+      {
+        // if pixel is already as bright or brighter than alpha
+        if((state.pixels[pixels_index] & 0x000F) > alpha) break;
+        u16 pixel = texture.pixels[texture_index];
+        pixel &= 0xFFF0;
+        pixel += alpha;
+        ALPHA_BLEND(pixel); // update new pixel
+
+        state.pixels[pixels_index] = pixel;
       }
     }
   }
-
-  overflow = texture_add(texture, x - camera.x, y - camera.y);
-
   return overflow;
 }

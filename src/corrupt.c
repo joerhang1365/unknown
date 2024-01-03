@@ -1,4 +1,5 @@
 #include "corrupt.h"
+#include "globals.h"
 
 void corrupt_load(corruption_t *corruption) 
 {
@@ -42,8 +43,7 @@ void corrupt_update(corruption_t *corruption, veci2 target)
     state.map[y / state.tile_size * state.columns + x / state.tile_size] = ' ';
 
     // find dir to target
-    veci2 dif;
-    VECi2(dif, abs(target.x - x), abs(target.y - y));
+    veci2 dif = veci2_create(abs(target.x - x), abs(target.y - y));
 
     if (dif.x >= dif.y) 
     {

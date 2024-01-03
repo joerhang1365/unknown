@@ -1,11 +1,13 @@
 #include "texture.h"
+#include "globals.h"
 
 texture_t textures[TEXTURE_MAX];
 
-i32 texture_create(const char *source, texture_t *texture) 
+i32 texture_create(const char *source, const u32 type) 
 {
   i32 width, height, bytes_per_pixel;
   i32 success = 0;
+  texture_t *texture = &textures[type];
   FILE *image = fopen(source, "rb");
   ASSERT(image == NULL, "error opening bitmap file\n");
 
@@ -37,8 +39,9 @@ i32 texture_create(const char *source, texture_t *texture)
   return success;
 }
 
-i32 texture_add(texture_t texture, const i32 x, const i32 y) 
+i32 texture_render(const i32 x, const i32 y, const u32 type) 
 {
+  texture_t texture = textures[type];
   i32 overflow = 0;
 
   for (u32 i = 0; i < texture.height; i++) 
@@ -46,23 +49,24 @@ i32 texture_add(texture_t texture, const i32 x, const i32 y)
     for (u32 j = 0; j < texture.width; j++) 
     {
       i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
-      const u16 texture_pixel = texture.pixels[i * texture.width + j];
 
-      if (pixels_index >= 0 && overflow == 0 && (j + x) >= 0 &&
-          (j + x) < SCREEN_WIDTH && (i + y) >= 0 && (i + y) < SCREEN_HEIGHT) 
+      if (is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT, 
+                         pixels_index, x + j, y + i))
       {
-        pixels_index = pixels_index;
-        ALPHA_BLEND_OVER(state.pixels[pixels_index], texture_pixel,
+        ALPHA_BLEND_OVER(state.pixels[pixels_index], 
+                         texture.pixels[i * texture.width + j],
                          state.pixels[pixels_index]);
       }
+      else overflow = 1;
     }
   }
 
   return overflow;
 }
 
-void texture_destroy(texture_t *texture) 
+void texture_destroy(const u32 type) 
 {
+  texture_t *texture = &textures[type];
   free(texture->pixels);
   texture->pixels = NULL;
 }

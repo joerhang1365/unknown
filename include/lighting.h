@@ -10,6 +10,6 @@
 #define LIGHT_FLICKER 5
 
 i32 flash_light(const i32 x, const i32 y, u32 radius);
-i32 glow(const i32 x, const i32 y, texture_t texture);
+i32 glow(const i32 x, const i32 y, const u32 type); 
 
 #endif

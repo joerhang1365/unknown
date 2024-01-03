@@ -10,6 +10,7 @@
 
 #define MAP_COUNT 7
 #define CAMERA_SPEED 64 * DELTA_TIME
+#define SCREEN_TILES SCREEN_WIDTH / state.tile_size
 
 i32 main(i32 argc, char *argv[]) 
 {
@@ -56,14 +57,16 @@ i32 main(i32 argc, char *argv[])
   map_src[6] = "maps/restart.map";
 
   /* camera */
-  VECi2(camera, 0, 0);
+  camera = veci2_create(0, 0);
 
   state_load(map_src[map_index]);
   player_load();
 
   /* particles */
   particle_sim_t player_float_sim;
+  particle_sim_t rain_sim;
   particle_sim_create(&player_float_sim, 16);
+  particle_sim_create(&rain_sim, 128);
 
   /* corruption */
   corruption_t corruption;
@@ -78,25 +81,25 @@ i32 main(i32 argc, char *argv[])
   u32 text_index = 0;
 
   /* textures */
-  texture_create("textures/player.txt", &textures[PLAYER_TXT]);
-  texture_create("textures/tile.txt", &textures[TILE_TXT]);
-  texture_create("textures/blank.txt", &textures[BLANK_TXT]);
-  texture_create("textures/grass.txt", &textures[GRASS_TXT]);
-  texture_create("textures/flower.txt", &textures[FLOWER_TXT]);
-  texture_create("textures/wood.txt", &textures[WOOD_TXT]);
-  texture_create("textures/text.txt", &textures[T_TXT]);
-  texture_create("textures/next.txt", &textures[NEXT_TXT]);
-  texture_create("textures/p.txt", &textures[P_TXT]);
-  texture_create("textures/rock.txt", &textures[ROCK_TXT]);
-  texture_create("textures/water.txt", &textures[WATER_TXT]);
-  texture_create("textures/girl.txt", &textures[GIRL_TXT]);
-  texture_create("textures/corruption.txt", &textures[CORRUPTION_TXT]);
+  texture_create("textures/player.txt", PLAYER_TXT);
+  texture_create("textures/tile.txt", TILE_TXT);
+  texture_create("textures/blank.txt", BLANK_TXT);
+  texture_create("textures/grass.txt", GRASS_TXT);
+  texture_create("textures/flower.txt", FLOWER_TXT);
+  texture_create("textures/wood.txt", WOOD_TXT);
+  texture_create("textures/text.txt", T_TXT);
+  texture_create("textures/next.txt", NEXT_TXT);
+  texture_create("textures/p.txt", P_TXT);
+  texture_create("textures/rock.txt", ROCK_TXT);
+  texture_create("textures/water.txt", WATER_TXT);
+  texture_create("textures/girl.txt", GIRL_TXT);
+  texture_create("textures/corruption.txt", CORRUPTION_TXT);
 
   /* animations */
-  animator_create(&animations[PLAYER_ANIM], textures[PLAYER_TXT], 8, 8, 5);
-  animator_create(&animations[GRASS_ANIM], textures[GRASS_TXT], 8, 8, 4);
-  animator_create(&animations[FLOWER_ANIM], textures[FLOWER_TXT], 8, 8, 2);
-  animator_create(&animations[WATER_ANIM], textures[WATER_TXT], 8, 8, 2);
+  animator_create(8, 8, 5, PLAYER_ANIM, PLAYER_TXT);
+  animator_create(8, 8, 4, GRASS_ANIM, GRASS_TXT);
+  animator_create(8, 8, 2, FLOWER_ANIM, FLOWER_TXT);
+  animator_create(8, 8, 2, WATER_ANIM, WATER_TXT);
 
   while (!state.quit) 
   {
@@ -114,22 +117,22 @@ i32 main(i32 argc, char *argv[])
       */
       switch (event.type) 
       {
-        case SDL_QUIT: state.quit = 1; break;
-        case SDL_KEYDOWN:
-          switch (event.key.keysym.sym) 
-          {
-            case SDLK_LEFT: state.key = LEFT; break;
-            case SDLK_RIGHT: state.key = RIGHT; break;
-            case SDLK_UP: state.key = UP; break;
-            case SDLK_DOWN: state.key = DOWN; break;
-            case SDLK_x: state.key = X; break;
-            case SDLK_1: state.key = ONE; break;
-            case SDLK_F1: state.key = F1; break;
-            default: state.key = NONE;
-          }
-          break;
-        case SDL_KEYUP: state.key = NONE; break;
-        default: state.key = NONE;
+      case SDL_QUIT: state.quit = 1; break;
+      case SDL_KEYDOWN:
+        switch (event.key.keysym.sym) 
+        {
+        case SDLK_LEFT: state.key = LEFT; break;
+        case SDLK_RIGHT: state.key = RIGHT; break;
+        case SDLK_UP: state.key = UP; break;
+        case SDLK_DOWN: state.key = DOWN; break;
+        case SDLK_x: state.key = X; break;
+        case SDLK_1: state.key = ONE; break;
+        case SDLK_F1: state.key = F1; break;
+        default: break;
+        }
+        break;
+      case SDL_KEYUP: state.key = NONE; break;
+      default: break;
       }
     }
 
@@ -169,7 +172,7 @@ i32 main(i32 argc, char *argv[])
           state_load(map_src[map_index]);
           player_load();
           corrupt_load(&corruption);
-          VECi2(camera, 0, 0);
+          camera = veci2_create(0, 0);
         }
       }
 
@@ -195,8 +198,8 @@ i32 main(i32 argc, char *argv[])
       player.pos.y += round(player.dir.y * PLAYER_SPEED);
 
       /* player collision */
-      if (player_touch('R') == 1 || player_touch('w') == 1 ||
-          player_touch('G') == 1 || player.pos.x < 0 ||
+      if (player_touch('R') || player_touch('w') ||
+          player_touch('G') || player.pos.x < 0 ||
           player.pos.x > (state.columns - 1) * state.tile_size ||
           player.pos.y < 1 ||
           player.pos.y > (state.rows - 1) * state.tile_size) 
@@ -210,16 +213,16 @@ i32 main(i32 argc, char *argv[])
       {
         switch (state.key) 
         {
-          case LEFT: animator_set_index(&animations[PLAYER_ANIM], 2); break;
-          case RIGHT: animator_set_index(&animations[PLAYER_ANIM], 1); break;
-          case UP: animator_set_index(&animations[PLAYER_ANIM], 3); break;
-          case DOWN: animator_set_index(&animations[PLAYER_ANIM], 4); break;
-          default: animator_set_index(&animations[PLAYER_ANIM], 0);
+        case LEFT: animator_set_index(2, PLAYER_ANIM); break;
+        case RIGHT: animator_set_index(1, PLAYER_ANIM); break;
+        case UP: animator_set_index(3, PLAYER_ANIM); break;
+        case DOWN: animator_set_index(4, PLAYER_ANIM); break;
+        default: animator_set_index(0, PLAYER_ANIM);
         }
       } 
       else 
       {
-        animator_set_index(&animations[PLAYER_ANIM], 0);
+        animator_set_index(0, PLAYER_ANIM);
       }
 
       /* text */
@@ -245,23 +248,27 @@ i32 main(i32 argc, char *argv[])
         state_load(map_src[map_index]);
         player_load();
         corrupt_load(&corruption);
-        VECi2(camera, 0, 0);
+        camera = veci2_create(0, 0);
       }
 
       /* restart */
       if (player_touch('C')) 
       {
-        map_index = 0;
+        map_index = 1;
         state_load(map_src[MAP_COUNT - 1]);
         player_load();
         corrupt_load(&corruption);
-        VECi2(camera, 0, 0);
+        camera = veci2_create(0, 0); 
       }
 
       /* animations */
-      animator_update(&animations[GRASS_ANIM], 0.5f);
-      animator_update(&animations[FLOWER_ANIM], 2.0f);
-      animator_update(&animations[WATER_ANIM], 0.25f);
+      animator_update(0.5f, GRASS_ANIM);
+      animator_update(2.0f, FLOWER_ANIM);
+      animator_update(0.25f, WATER_ANIM);
+
+      /* particle */
+      particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
+      particle_rain(&rain_sim, camera.x, camera.y, 0.1f);
 
       /* player camera */
       if (player.pos.x > camera.x + 12 * state.tile_size &&
@@ -286,8 +293,7 @@ i32 main(i32 argc, char *argv[])
       }
 
       /* corruption */
-      veci2 target;
-      VECi2(target, player.pos.x, player.pos.y);
+      veci2 target = veci2_create(player.pos.x, player.pos.y);
       corrupt_update(&corruption, target);
     }
 
@@ -309,51 +315,88 @@ i32 main(i32 argc, char *argv[])
       state.pixels[i] = state.background_color;
     }
 
-    for (u32 i = camera.y / state.tile_size; i < state.columns; i++) 
+    const u32 camera_column = (f32)camera.y / state.tile_size;
+    const u32 camera_row = (f32)camera.x / state.tile_size;
+
+    for (u32 i = camera_column; i < camera_column + SCREEN_TILES + 1; i++) 
     {
-      for (u32 j = camera.x / state.tile_size; j < state.rows; j++) 
+      for (u32 j = camera_row; j < camera_row + SCREEN_TILES + 1; j++) 
       {
         const i32 x = j * state.tile_size - camera.x;
         const i32 y = i * state.tile_size - camera.y;
         switch (get_type(j, i)) 
         {
-          case 't': texture_add(textures[TILE_TXT], x, y); break;
-          case 'g': animator_add(&animations[GRASS_ANIM], x, y); break;
-          case 'f': animator_add(&animations[FLOWER_ANIM], x, y); break;
-          case 'W': texture_add(textures[WOOD_TXT], x, y); break;
-          case 'T': texture_add(textures[T_TXT], x, y); break;
-          case '>': texture_add(textures[NEXT_TXT], x, y); break;
-          case 'p': texture_add(textures[P_TXT], x, y); break;
-          case 'R': texture_add(textures[ROCK_TXT], x, y); break;
-          case 'w': animator_add(&animations[WATER_ANIM], x, y); break;
-          case 'G': texture_add(textures[GIRL_TXT], x, y); break;
-          case 'C': texture_add(textures[CORRUPTION_TXT], x, y); break;
-          default: texture_add(textures[BLANK_TXT], x, y);
+        case 't': texture_render(x, y, TILE_TXT); break;
+        case 'g': animator_render(x, y, GRASS_ANIM); break;
+        case 'f': animator_render(x, y, FLOWER_ANIM); break;
+        case 'W': texture_render(x, y, WOOD_TXT); break;
+        case 'T': texture_render(x, y, T_TXT); break;
+        case '>': texture_render(x, y, NEXT_TXT); break;
+        case 'p': texture_render(x, y, P_TXT); break;
+        case 'R': texture_render(x, y, ROCK_TXT); break;
+        case 'w': animator_render(x, y, WATER_ANIM); break;
+        case 'G': texture_render(x, y, GIRL_TXT); break;
+        case 'C': texture_render(x, y, CORRUPTION_TXT); break;
+        default: texture_render(x, y, BLANK_TXT);
         }
+      }
+    } 
+
+    /* particles */
+    particle_render(&player_float_sim, 0x00FF);
+
+    switch (state.weather)
+    {
+    case RAIN: particle_render(&rain_sim, 0x008F); break;
+    default: break;
+    }
+
+ /* girl */
+    if (state.girl_show) 
+      texture_render(player.prev_pos[0].x - camera.x, 
+                     player.prev_pos[0].y - camera.y,
+                     GIRL_TXT);
+
+    /* lighting */
+    switch (state.light)
+    {
+    case DARK: flash_light(player.pos.x + (f32)PLAYER_WIDTH_2,
+                           player.pos.y + (f32)PLAYER_HEIGHT_2, 64); break;
+    default: break;
+    }
+
+    /* corruption */
+    for (u32 i = 0; i < corruption.count; i++) 
+    {
+      /* makes is look spooky */
+      for (u32 j = 0; j < 64; j++)
+      {
+        textures[CORRUPTION_TXT].pixels[j] = rand() % 65636;
       }
     }
 
-    /* player */
-    animator_add(&animations[PLAYER_ANIM], player.pos.x - camera.x,
-                 player.pos.y - camera.y);
-
-    particle_float(&player_float_sim, player.pos.x, player.pos.y, 0x00FF, 0.1f);
-
-    /* girl */
-    if (state.girl_show) texture_add(textures[GIRL_TXT], player.prev_pos[0].x - 
-                                     camera.x, player.prev_pos[0].y - camera.y);
-
-    /* lighting */
-    flash_light(player.pos.x + (f32)PLAYER_WIDTH_2,
-                player.pos.y + (f32)PLAYER_HEIGHT_2, 64);
-
-    /* corruption glow */
-    for (u32 i = 0; i < corruption.count; i++) 
+    /* glowy tiles */
+    for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
     {
-      glow(corruption.corrupts[i].x, corruption.corrupts[i].y,
-           textures[CORRUPTION_TXT]);
+      for (u32 j = camera_row; j < camera_row + SCREEN_TILES; j++) 
+      {
+        const i32 x = j * state.tile_size - camera.x;
+        const i32 y = i * state.tile_size - camera.y;
+        switch (get_type(j, i)) 
+        {
+        case 'T': glow(x, y, T_TXT); break;
+        case '>': glow(x, y, NEXT_TXT); break;
+        case 'p': glow(x, y, P_TXT); break;
+        case 'C': glow(x, y, CORRUPTION_TXT); break;
+        default: break;
+        }
+      }
     }
-
+ 
+    /* player */
+    animator_render(player.pos.x - camera.x, player.pos.y - camera.y, 
+                    PLAYER_ANIM);
+ 
     /* text */
     if (text_show) text_render(state.texts[text_index], font, 32, 98);
 
@@ -389,22 +432,23 @@ i32 main(i32 argc, char *argv[])
   */
 
   /* texture */
-  texture_destroy(&textures[PLAYER_TXT]);
-  texture_destroy(&textures[TILE_TXT]);
-  texture_destroy(&textures[BLANK_TXT]);
-  texture_destroy(&textures[GRASS_TXT]);
-  texture_destroy(&textures[FLOWER_TXT]);
-  texture_destroy(&textures[NEXT_TXT]);
-  texture_destroy(&textures[P_TXT]);
-  texture_destroy(&textures[ROCK_TXT]);
-  texture_destroy(&textures[WATER_TXT]);
-  texture_destroy(&textures[GIRL_TXT]);
-  texture_destroy(&textures[CORRUPTION_TXT]);
+  texture_destroy(PLAYER_TXT);
+  texture_destroy(TILE_TXT);
+  texture_destroy(BLANK_TXT);
+  texture_destroy(GRASS_TXT);
+  texture_destroy(FLOWER_TXT);
+  texture_destroy(NEXT_TXT);
+  texture_destroy(P_TXT);
+  texture_destroy(ROCK_TXT);
+  texture_destroy(WATER_TXT);
+  texture_destroy(GIRL_TXT);
+  texture_destroy(CORRUPTION_TXT);
 
   font_destroy(&font);
   state_destroy();
   corrupt_destroy(&corruption);
   particle_sim_destroy(&player_float_sim);
+  particle_sim_destroy(&rain_sim);
   SDL_Quit();
 
   return 0;

@@ -2,6 +2,8 @@ columns=32
 rows=32
 tile_size=8
 background_color=080F
+light=1
+weather=1
 girl_show=0
 "                                "
 "                          g     " 

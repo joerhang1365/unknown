@@ -2,6 +2,8 @@ columns=16
 rows=16
 tile_size=8
 background_color=0000
+light=1
+weather=1
 girl_show=1
 "                "
 "            R   "

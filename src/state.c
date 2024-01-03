@@ -11,6 +11,8 @@ void state_load(const char *source)
   fscanf(in, "rows=%u\n", &state.rows);
   fscanf(in, "tile_size=%u\n", &state.tile_size);
   fscanf(in, "background_color=%x\n", (u32 *)&state.background_color);
+  fscanf(in, "light=%u\n", &state.light);
+  fscanf(in, "weather=%u\n", &state.weather);
   fscanf(in, "girl_show=%hhu\n", &state.girl_show);
 
   /* map */

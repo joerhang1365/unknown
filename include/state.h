@@ -23,6 +23,8 @@ typedef struct
   char *map;
   u16 background_color;
   byte girl_show;
+  u32 light;
+  u32 weather;
 
   /* text */
   u32 text_size;
@@ -30,6 +32,9 @@ typedef struct
 } state_t;
 
 extern state_t state;
+
+enum WEATHER { CLEAR, RAIN }; 
+enum LIGHT { LIGHT, DARK };
 
 void state_load(const char *source);
 void state_destroy();
@@ -48,8 +53,7 @@ static inline byte is_type(const f32 x, const f32 y, const char c)
 static inline veci2 find_position(const char c, const u32 instance_num)
 {
   u32 instance = 0;
-  veci2 temp;
-  VECi2(temp, 0, 0);
+  veci2 temp = veci2_create(0, 0);
   for (u32 i = 0; i < state.columns; i++)
   {
     for (u32 j = 0; j < state.rows; j++)
@@ -59,8 +63,8 @@ static inline veci2 find_position(const char c, const u32 instance_num)
       {
         if (instance == instance_num)
         {
-          VECi2(temp, i, j);
-          VECi2_MULTI(temp, state.tile_size);
+          temp = veci2_create(i, j);
+          VECI2_SCALE(temp, state.tile_size);
           break;
         }
         instance++;
