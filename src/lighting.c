@@ -2,23 +2,15 @@
 #include "globals.h"
 #include "texture.h"
 
-i32 flash_light(const i32 x, const i32 y, u32 radius) 
+i32 light(const i32 x, const i32 y, u32 radius, const u32 flicker,
+          const u32 accuracy)
 {
   i32 overflow = 0;
-  u16 temp_pixels[SCREEN_MAX];
-  // copy all the pixels
-  for (u32 i = 0; i < SCREEN_MAX; i++) 
-  {
-    temp_pixels[i] = state.pixels[i];
-  }
-
-  // convert all pixels to black
-  SCREEN_CLEAR(state.pixels, SCREEN_MAX);
 
   // add flicker to light
-  if ((u32)TIME % 2 == 0) radius += LIGHT_FLICKER;
+  if ((u32)TIME % 2 == 0) radius += flicker;
 
-  for (f32 theta = 0; theta < PI2; theta += (f32) PI / LIGHT_ACCURACY) 
+  for (f32 theta = 0; theta < PI2; theta += PI2 / accuracy) 
   {
     byte solid = 0;
 
@@ -57,19 +49,11 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
         if (solid == 1 && texture_pixel == 0x0000) break;
 
         // add da pixel color
-        state.pixels[pixels_index] = temp_pixels[pixels_index];
-
-        // adjust transparency the further from light source
         state.pixels[pixels_index] &= 0xFFF0;
-        state.pixels[pixels_index] += (u16)(16.0f * (1.0f - (f32)r / radius));
-        ALPHA_BLEND(state.pixels[pixels_index]);
+        state.pixels[pixels_index] += (u16)(15.0f * (1.0f - (f32)r / radius));
       }
     }
   }
-
-  // pos pixel does not automaticy get rendered forsum reason
-  state.pixels[(y - camera.y) * SCREEN_WIDTH + x - camera.x] =
-      temp_pixels[(y - camera.y) * SCREEN_WIDTH + x - camera.x];
 
   return overflow;
 }
@@ -77,8 +61,10 @@ i32 flash_light(const i32 x, const i32 y, u32 radius)
 i32 glow(const i32 x, const i32 y, const u32 type) 
 {
   i32 overflow = 0;
-  u16 alpha = fabs(sinf(TIME) * 16.0f);
+
+  u16 alpha = fabs(sinf(TIME) * 15.0f);
   alpha &= 0x000F; // make sure between 0 and 15
+
   const texture_t texture = textures[type];
 
   for (u32 i = 0; i < texture.height; i++) 
@@ -86,21 +72,18 @@ i32 glow(const i32 x, const i32 y, const u32 type)
     for (u32 j = 0; j < texture.width; j++) 
     {
       const u32 pixels_index = (y + i) * SCREEN_WIDTH + x + j;
-      const u32 texture_index = i * texture.width + j;
+      const u32 texture_pixel = texture.pixels[i * texture.width + j];
 
       // check if is on screen
-      if (texture.pixels[texture_index] != 0x0000 && 
+      if (texture_pixel != 0x0000 &&
           is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT,
                          pixels_index, (x + j), (y + i)))
       {
         // if pixel is already as bright or brighter than alpha
         if((state.pixels[pixels_index] & 0x000F) > alpha) break;
-        u16 pixel = texture.pixels[texture_index];
-        pixel &= 0xFFF0;
-        pixel += alpha;
-        ALPHA_BLEND(pixel); // update new pixel
 
-        state.pixels[pixels_index] = pixel;
+        state.pixels[pixels_index] &= 0xFFF0;
+        state.pixels[pixels_index] += alpha;
       }
     }
   }

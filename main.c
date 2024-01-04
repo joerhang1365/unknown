@@ -295,6 +295,14 @@ i32 main(i32 argc, char *argv[])
       /* corruption */
       veci2 target = veci2_create(player.pos.x, player.pos.y);
       corrupt_update(&corruption, target);
+      for (u32 i = 0; i < corruption.count; i++) 
+      {
+        /* makes is look spooky */
+        for (u32 j = 0; j < 64; j++)
+        {
+          textures[CORRUPTION_TXT].pixels[j] = rand() % 65636;
+        }
+      }
     }
 
     /*
@@ -337,7 +345,7 @@ i32 main(i32 argc, char *argv[])
         case 'w': animator_render(x, y, WATER_ANIM); break;
         case 'G': texture_render(x, y, GIRL_TXT); break;
         case 'C': texture_render(x, y, CORRUPTION_TXT); break;
-        default: texture_render(x, y, BLANK_TXT);
+        default:  texture_render(x, y, BLANK_TXT);
         }
       }
     } 
@@ -351,54 +359,51 @@ i32 main(i32 argc, char *argv[])
     default: break;
     }
 
- /* girl */
+    /* girl */
     if (state.girl_show) 
       texture_render(player.prev_pos[0].x - camera.x, 
                      player.prev_pos[0].y - camera.y,
                      GIRL_TXT);
-
-    /* lighting */
-    switch (state.light)
-    {
-    case DARK: flash_light(player.pos.x + (f32)PLAYER_WIDTH_2,
-                           player.pos.y + (f32)PLAYER_HEIGHT_2, 64); break;
-    default: break;
-    }
-
-    /* corruption */
-    for (u32 i = 0; i < corruption.count; i++) 
-    {
-      /* makes is look spooky */
-      for (u32 j = 0; j < 64; j++)
-      {
-        textures[CORRUPTION_TXT].pixels[j] = rand() % 65636;
-      }
-    }
-
-    /* glowy tiles */
-    for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
-    {
-      for (u32 j = camera_row; j < camera_row + SCREEN_TILES; j++) 
-      {
-        const i32 x = j * state.tile_size - camera.x;
-        const i32 y = i * state.tile_size - camera.y;
-        switch (get_type(j, i)) 
-        {
-        case 'T': glow(x, y, T_TXT); break;
-        case '>': glow(x, y, NEXT_TXT); break;
-        case 'p': glow(x, y, P_TXT); break;
-        case 'C': glow(x, y, CORRUPTION_TXT); break;
-        default: break;
-        }
-      }
-    }
- 
     /* player */
     animator_render(player.pos.x - camera.x, player.pos.y - camera.y, 
                     PLAYER_ANIM);
+
+    /* lighting */
+    if(state.light == DARK)
+    {
+      ALPHA_SET(state.pixels, SCREEN_MAX, 0);
+      light(
+          player.pos.x + PLAYER_WIDTH_2,
+          player.pos.y + PLAYER_HEIGHT_2,
+          32, 2, 360);
+
+      /* glowy tiles */
+      for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
+      {
+        for (u32 j = camera_row; j < camera_row + SCREEN_TILES; j++) 
+        {
+          const i32 x = j * state.tile_size - camera.x;
+          const i32 y = i * state.tile_size - camera.y;
+          switch (get_type(j, i)) 
+          {
+          case 'T': glow(x, y, T_TXT); break;
+          case '>': glow(x, y, NEXT_TXT); break;
+          case 'p': glow(x, y, P_TXT); break;
+          case 'C': glow(x, y, CORRUPTION_TXT); break;
+          default: break;
+          }
+        }
+      }
+    } 
  
     /* text */
     if (text_show) text_render(state.texts[text_index], font, 32, 98);
+
+    /* change color value based on alpha value */
+    for(u32 i = 0; i < SCREEN_MAX; i++)
+    {
+      ALPHA_BLEND(state.pixels[i]);
+    }
 
     const u32 pitch = 2;
     SDL_UpdateTexture(state.texture, NULL, state.pixels, SCREEN_WIDTH * pitch);

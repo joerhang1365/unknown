@@ -73,16 +73,23 @@ static inline veci2 vec2_to_veci2(const vec2 vec2)
   }
 
 #define ALPHA_BLEND(_color) _color = \
-  ((u16)((_color & 0xF000) * (f32)(_color & 0x000F) / 16.0f) & 0xF000) + \
-  ((u16)((_color & 0x0F00) * (f32)(_color & 0x000F) / 16.0f) & 0x0F00) + \
-  ((u16)((_color & 0x00F0) * (f32)(_color & 0x000F) / 16.0f) & 0x00F0) + \
+  ((u16)((_color & 0xF000) * (f32)(_color & 0x000F) / 15.0f) & 0xF000) + \
+  ((u16)((_color & 0x0F00) * (f32)(_color & 0x000F) / 15.0f) & 0x0F00) + \
+  ((u16)((_color & 0x00F0) * (f32)(_color & 0x000F) / 15.0f) & 0x00F0) + \
   (u16)(_color & 0x000F);
 
-#define ALPHA_BLEND_OVER(_color, _a, _b) _color = \
-  ((u16)(((_a & 0xF000) * (_a & 0x000F) + (_b & 0xF000) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0xF000) + \
-  ((u16)(((_a & 0x0F00) * (_a & 0x000F) + (_b & 0x0F00) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x0F00) + \
-  ((u16)(((_a & 0x00F0) * (_a & 0x000F) + (_b & 0x00F0) * (_b & 0x000F) * (1 - (f32)(_a & 0x000F) / 16)) / 16) & 0x00F0) +  \
-  ((u16)((_a & 0x000F)+ (_a & 0x000F) * (1 - (f32)(_a & 0x000F) / 16.0f)) & 0x000F);
+#define ALPHA_OVER(_color, _a, _b) _color = \
+  (((_a & 0xF000) + (_b & 0xF000) * (15 - (_a & 0x000F))) & 0xF000) + \
+  (((_a & 0x0F00) + (_b & 0x0F00) * (15 - (_a & 0x000F))) & 0x0F00) + \
+  (((_a & 0x00F0) + (_b & 0x00F0) * (15 - (_a & 0x000F))) & 0x00F0) + \
+  (((_a & 0x000F) + (_b & 0x000F)) & 0x000F);
+
+#define ALPHA_SET(_arr, _size, _a) \
+  for(u32 i = 0; i < _size; i++) \
+  { \
+    _arr[i] &= 0xFFF0; \
+    _arr[i] += _a; \
+  }
 
 static inline byte is_valid_pixel(const u32 max, const u32 width, 
                                   const u32 height, const u32 index, 

@@ -51,7 +51,8 @@ i32 animator_render(const i32 x, const i32 y, const u32 type)
       if(is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT,
                         pixels_index, x + j, y + i))
       {
-        ALPHA_BLEND_OVER(state.pixels[pixels_index], animator_pixel,
+        ALPHA_OVER(state.pixels[pixels_index], 
+                         animator_pixel,
                          state.pixels[pixels_index]);
       }
       else overflow  = 1;
