@@ -9,7 +9,7 @@ void font_create(font_t *font, const u16 color, const char *source)
   fscanf(in, "width=%u\n", &font->width);
   fscanf(in, "height=%u\n", &font->height);
 
-  // if(font->data != NULL) free(font->data);
+  if(font->data != NULL) free(font->data);
   font->data = malloc(sizeof(i32) * 27 * font->height);
   ASSERT(font->data == NULL, "failed to allocate memory to font data\n");
 

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -std=c99 -Wall -Werror -Wpedantic -O3 -I./include
+CFLAGS= -std=c99 -Wall -Werror -Wpedantic -g -O0 -I./include
 LDFLAGS= -lm -lSDL2
 PROJECT_NAME=unknown
 SOURCE_FILES=$(wildcard src/*.c)

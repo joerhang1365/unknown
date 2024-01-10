@@ -42,7 +42,7 @@ i32 texture_create(const char *source, const u32 type)
 i32 texture_render(const i32 x, const i32 y, const u32 type) 
 {
   texture_t texture = textures[type];
-  i32 overflow = 0;
+  i32 success = 0;
 
   for (u32 i = 0; i < texture.height; i++) 
   {
@@ -50,18 +50,17 @@ i32 texture_render(const i32 x, const i32 y, const u32 type)
     {
       i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
 
-      if (is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT, 
-                         pixels_index, x + j, y + i))
+      if (is_valid_pixel(pixels_index, x + j, y + i))
       {
         ALPHA_OVER(state.pixels[pixels_index],
                          texture.pixels[i * texture.width + j],
                          state.pixels[pixels_index]);
       }
-      else overflow = 1;
+      else success = 1;
     }
   }
 
-  return overflow;
+  return success;
 }
 
 void texture_destroy(const u32 type) 

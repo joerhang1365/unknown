@@ -11,6 +11,8 @@
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 128
+#define SCREEN_WIDTH_2 SCREEN_WIDTH / 2
+#define SCREEN_HEIGHT_2 SCREEN_HEIGHT / 2
 #define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
 #define SCALE 6
 #define FRAMERATE 24
@@ -78,11 +80,16 @@ static inline veci2 vec2_to_veci2(const vec2 vec2)
   ((u16)((_color & 0x00F0) * (f32)(_color & 0x000F) / 15.0f) & 0x00F0) + \
   (u16)(_color & 0x000F);
 
+/* 
+ * TODO
+ * actually fix alpha out
+ */
+
 #define ALPHA_OVER(_color, _a, _b) _color = \
   (((_a & 0xF000) + (_b & 0xF000) * (15 - (_a & 0x000F))) & 0xF000) + \
   (((_a & 0x0F00) + (_b & 0x0F00) * (15 - (_a & 0x000F))) & 0x0F00) + \
   (((_a & 0x00F0) + (_b & 0x00F0) * (15 - (_a & 0x000F))) & 0x00F0) + \
-  (((_a & 0x000F) + (_b & 0x000F)) & 0x000F);
+  (((_a & 0x000F) > (_b & 0x000F) ? (_a & 0x000F) : (_b & 0x000F)) & 0x000F);
 
 #define ALPHA_SET(_arr, _size, _a) \
   for(u32 i = 0; i < _size; i++) \
@@ -91,13 +98,11 @@ static inline veci2 vec2_to_veci2(const vec2 vec2)
     _arr[i] += _a; \
   }
 
-static inline byte is_valid_pixel(const u32 max, const u32 width, 
-                                  const u32 height, const u32 index, 
-                                  const i32 x, const i32 y)
+static inline byte is_valid_pixel(const u32 index, const i32 x, const i32 y)
 {
-  return index >= 0 && index < max &&
-         x >= 0 && x < width &&
-         y >= 0 && y < height;
+  return index >= 0 && index < SCREEN_MAX &&
+         x >= 0 && x < SCREEN_WIDTH &&
+         y >= 0 && y < SCREEN_HEIGHT;
 }
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};

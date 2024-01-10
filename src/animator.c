@@ -37,7 +37,7 @@ void animator_update(const f32 framerate, const u32 type)
 i32 animator_render(const i32 x, const i32 y, const u32 type) 
 {
   animator_t *animator = &animations[type];
-  byte overflow = 0;
+  byte success = 0;
 
   for (u32 i = 0; i < animator->height; i++) 
   {
@@ -48,16 +48,15 @@ i32 animator_render(const i32 x, const i32 y, const u32 type)
                                  animator->width * animator->index;
       const u16 animator_pixel = animator->texture_map.pixels[animator_index];
 
-      if(is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT,
-                        pixels_index, x + j, y + i))
+      if(is_valid_pixel(pixels_index, x + j, y + i))
       {
         ALPHA_OVER(state.pixels[pixels_index], 
                          animator_pixel,
                          state.pixels[pixels_index]);
       }
-      else overflow  = 1;
+      else success  = 1;
     }
   }
 
-  return overflow;
+  return success;
 }

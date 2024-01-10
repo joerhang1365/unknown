@@ -3,7 +3,7 @@
 
 #include "texture.h"
 
-#define ANIMATION_MAX 5
+#define ANIMATION_MAX 6
 
 typedef struct
 {
@@ -14,7 +14,8 @@ typedef struct
   f32 frame;
 } animator_t;
 
-enum ANIMATIONS { PLAYER_ANIM, GRASS_ANIM, FLOWER_ANIM, WATER_ANIM };
+enum ANIMATIONS { PLAYER_ANIM, GRASS_ANIM, FLOWER_ANIM, WATER_ANIM, 
+                  BUTTON_ANIM };
 
 extern animator_t animations[ANIMATION_MAX]; 
 

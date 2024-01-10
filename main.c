@@ -8,7 +8,7 @@
 #include "text.h"
 #include "texture.h"
 
-#define MAP_COUNT 7
+#define MAP_COUNT 9
 #define CAMERA_SPEED 64 * DELTA_TIME
 #define SCREEN_TILES SCREEN_WIDTH / state.tile_size
 
@@ -50,11 +50,13 @@ i32 main(i32 argc, char *argv[])
   char *map_src[MAP_COUNT];
   map_src[0] = "maps/test.map";
   map_src[1] = "maps/start.map";
-  map_src[2] = "maps/flower.map";
-  map_src[3] = "maps/big.map";
-  map_src[4] = "maps/meeting.map";
-  map_src[5] = "maps/corruption.map";
-  map_src[6] = "maps/restart.map";
+  map_src[2] = "maps/button.map";
+  map_src[3] = "maps/frbegin.map";
+  map_src[4] = "maps/flower.map";
+  map_src[5] = "maps/big.map";
+  map_src[6] = "maps/meeting.map";
+  map_src[7] = "maps/corruption.map";
+  map_src[8] = "maps/restart.map";
 
   /* camera */
   camera = veci2_create(0, 0);
@@ -67,18 +69,24 @@ i32 main(i32 argc, char *argv[])
   particle_sim_t rain_sim;
   particle_sim_create(&player_float_sim, 16);
   particle_sim_create(&rain_sim, 128);
+  veci2 rain_dir = veci2_create(-1, 1);
 
   /* corruption */
   corruption_t corruption;
+  corruption.corrupts = NULL;
   corrupt_load(&corruption);
 
   /* font */
   font_t font;
+  font.data = NULL; // need this for sum reason
   font_create(&font, 0xFFFF, "font_data");
 
   /* text */
   byte text_show = 0;
   u32 text_index = 0;
+
+  /* da button */
+  byte button = 0;
 
   /* textures */
   texture_create("textures/player.txt", PLAYER_TXT);
@@ -94,12 +102,14 @@ i32 main(i32 argc, char *argv[])
   texture_create("textures/water.txt", WATER_TXT);
   texture_create("textures/girl.txt", GIRL_TXT);
   texture_create("textures/corruption.txt", CORRUPTION_TXT);
+  texture_create("textures/button.txt", BUTTON_TXT);
 
   /* animations */
   animator_create(8, 8, 5, PLAYER_ANIM, PLAYER_TXT);
   animator_create(8, 8, 4, GRASS_ANIM, GRASS_TXT);
   animator_create(8, 8, 2, FLOWER_ANIM, FLOWER_TXT);
   animator_create(8, 8, 2, WATER_ANIM, WATER_TXT);
+  animator_create(8, 8, 2, BUTTON_ANIM, BUTTON_TXT);
 
   while (!state.quit) 
   {
@@ -173,6 +183,7 @@ i32 main(i32 argc, char *argv[])
           player_load();
           corrupt_load(&corruption);
           camera = veci2_create(0, 0);
+          button = 0;
         }
       }
 
@@ -180,18 +191,31 @@ i32 main(i32 argc, char *argv[])
       player.dir.x = 0;
       player.dir.y = 0;
 
-      if (state.key != NONE) 
+      switch (state.key) 
       {
-        switch (state.key) 
-        {
-          case LEFT: player.dir.x = -1; break;
-          case RIGHT: player.dir.x = 1; break;
-          case UP: player.dir.y = -1; break;
-          case DOWN: player.dir.y = 1; break;
-          default: player.dir.x = 0; player.dir.y = 0;
-        }
-
+        case LEFT:  player.dir.x = -1; break;
+        case RIGHT: player.dir.x = 1; break;
+        case UP:    player.dir.y = -1; break;
+        case DOWN:  player.dir.y = 1; break;
+        default:   player.dir.x = 0; player.dir.y = 0;
+      }
+      
+      if (state.key == LEFT ||
+          state.key == RIGHT ||
+          state.key == UP ||
+          state.key == DOWN)
+      {
         LEFT_SHIFT(player.prev_pos, player.pos, PLAYER_PREVIOUS);
+      }
+
+      /* player animation */
+      switch (state.key)
+      {
+        case LEFT:  animator_set_index(2, PLAYER_ANIM); break;
+        case RIGHT: animator_set_index(1, PLAYER_ANIM); break;
+        case UP:    animator_set_index(3, PLAYER_ANIM); break;
+        case DOWN:  animator_set_index(4, PLAYER_ANIM); break;
+        default:    animator_set_index(0, PLAYER_ANIM);
       }
 
       player.pos.x += round(player.dir.x * PLAYER_SPEED);
@@ -206,24 +230,7 @@ i32 main(i32 argc, char *argv[])
       {
         player.pos.x -= round(player.dir.x * PLAYER_SPEED);
         player.pos.y -= round(player.dir.y * PLAYER_SPEED);
-      }
-
-      /* player animation */
-      if (state.key != NONE) 
-      {
-        switch (state.key) 
-        {
-        case LEFT: animator_set_index(2, PLAYER_ANIM); break;
-        case RIGHT: animator_set_index(1, PLAYER_ANIM); break;
-        case UP: animator_set_index(3, PLAYER_ANIM); break;
-        case DOWN: animator_set_index(4, PLAYER_ANIM); break;
-        default: animator_set_index(0, PLAYER_ANIM);
-        }
       } 
-      else 
-      {
-        animator_set_index(0, PLAYER_ANIM);
-      }
 
       /* text */
       if (player_touch('T')) 
@@ -241,6 +248,12 @@ i32 main(i32 argc, char *argv[])
         text_index = 0;
       }
 
+      /* button press */
+      if (player_touch('B'))
+      {
+        button = 1;
+      }
+
       /* next map */
       if (player_touch('>')) 
       {
@@ -249,16 +262,18 @@ i32 main(i32 argc, char *argv[])
         player_load();
         corrupt_load(&corruption);
         camera = veci2_create(0, 0);
+        button = 0;
       }
 
       /* restart */
       if (player_touch('C')) 
       {
-        map_index = 1;
+        map_index = 2;
         state_load(map_src[MAP_COUNT - 1]);
         player_load();
         corrupt_load(&corruption);
         camera = veci2_create(0, 0); 
+        button = 0;
       }
 
       /* animations */
@@ -266,9 +281,12 @@ i32 main(i32 argc, char *argv[])
       animator_update(2.0f, FLOWER_ANIM);
       animator_update(0.25f, WATER_ANIM);
 
+      if (button) animator_set_index(1, BUTTON_ANIM);
+      else animator_set_index(0, BUTTON_ANIM);
+
       /* particle */
       particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
-      particle_rain(&rain_sim, camera.x, camera.y, 0.1f);
+      particle_rain(&rain_sim, camera.x, camera.y, rain_dir, 0.1f);
 
       /* player camera */
       if (player.pos.x > camera.x + 12 * state.tile_size &&
@@ -345,31 +363,20 @@ i32 main(i32 argc, char *argv[])
         case 'w': animator_render(x, y, WATER_ANIM); break;
         case 'G': texture_render(x, y, GIRL_TXT); break;
         case 'C': texture_render(x, y, CORRUPTION_TXT); break;
+        case 'B': animator_render(x, y, BUTTON_ANIM); break;
         default:  texture_render(x, y, BLANK_TXT);
         }
       }
     } 
 
-    /* particles */
-    particle_render(&player_float_sim, 0x00FF);
-
     switch (state.weather)
     {
     case RAIN: particle_render(&rain_sim, 0x008F); break;
     default: break;
-    }
-
-    /* girl */
-    if (state.girl_show) 
-      texture_render(player.prev_pos[0].x - camera.x, 
-                     player.prev_pos[0].y - camera.y,
-                     GIRL_TXT);
-    /* player */
-    animator_render(player.pos.x - camera.x, player.pos.y - camera.y, 
-                    PLAYER_ANIM);
+    } 
 
     /* lighting */
-    if(state.light == DARK)
+    if (state.light == DARK)
     {
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
       light(
@@ -394,7 +401,22 @@ i32 main(i32 argc, char *argv[])
           }
         }
       }
-    } 
+    }
+    else 
+    {
+      sun_shadows(veci2_create(0, 0), 8);
+    }
+
+    /* girl */
+    if (state.girl_show) 
+      texture_render(player.prev_pos[0].x - camera.x, 
+                     player.prev_pos[0].y - camera.y,
+                     GIRL_TXT);
+
+    /* player */
+    particle_render(&player_float_sim, 0x00FF);
+    animator_render(player.pos.x - camera.x, player.pos.y - camera.y, 
+                    PLAYER_ANIM);
  
     /* text */
     if (text_show) text_render(state.texts[text_index], font, 32, 98);

@@ -16,26 +16,25 @@ void particle_add(particle_sim_t *sim, const i32 x, const i32 y)
   if (sim->size < sim->capacity) sim->size++;
 }
 
-i32 particle_render(particle_sim_t *sim, u16 color)
+i32 particle_render(particle_sim_t *sim, const u16 color)
 {
-  i32 overflow = 0;
+  i32 success = 0;
 
   for (u32 i = 0; i < sim->size; i++) 
   {
-    const i32 x_adj = sim->particles[i].x - camera.x;
-    const i32 y_adj = sim->particles[i].y - camera.y;
-    const i32 pixels_index = y_adj * SCREEN_WIDTH + x_adj; 
+    i32 x_adj = sim->particles[i].x - camera.x;
+    i32 y_adj = sim->particles[i].y - camera.y;
+    i32 pixels_index = y_adj * SCREEN_WIDTH + x_adj; 
 
     // is in screen boundary
-    if (is_valid_pixel(SCREEN_MAX, SCREEN_WIDTH, SCREEN_HEIGHT, 
-                      pixels_index, x_adj, y_adj))
+    if (is_valid_pixel(pixels_index, x_adj, y_adj))
     {
       state.pixels[pixels_index] = color;
     }
-    else overflow = 1;
+    else success = 1;
   }
 
-  return overflow;
+  return success;
 }
 
 static f32 last_update_time = 0.0f;
@@ -58,18 +57,18 @@ void particle_float(particle_sim_t *sim, const i32 x, const i32 y,
 
 static u32 wind_update_time = 0;
 
-void particle_rain(particle_sim_t *sim, const i32 x, const i32 y, const f32 update_time)
+void particle_rain(particle_sim_t *sim, const i32 x, const i32 y, const veci2 dir, const f32 update_time)
 {
   if (TIME - wind_update_time >= update_time)
   {
     wind_update_time = TIME;
-    particle_add(sim, x + rand() % SCREEN_WIDTH * 2 - SCREEN_WIDTH, y);
+    particle_add(sim, x + rand() % SCREEN_WIDTH - SCREEN_WIDTH_2 * dir.x, y);
 
     // make wind movement
     for (u32 i = 0; i < sim->size; i++)
     {
-      sim->particles[i].x++;
-      sim->particles[i].y++;
+      sim->particles[i].x += dir.x;
+      sim->particles[i].y += dir.y;
     }
   }
 }

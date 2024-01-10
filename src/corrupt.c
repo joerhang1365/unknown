@@ -10,7 +10,7 @@ void corrupt_load(corruption_t *corruption)
     if (state.map[i] == 'C') count++;
   }
 
-  // if(corruption->corrupts != NULL) free(corruption->corrupts);
+  if(corruption->corrupts != NULL) free(corruption->corrupts);
   corruption->corrupts = malloc(sizeof(corrupt_t) * count);
   ASSERT(corruption->corrupts == NULL,
          "failed to allocate memory for corrupts\n");

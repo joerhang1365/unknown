@@ -15,11 +15,11 @@ typedef struct
 
 void particle_sim_create(particle_sim_t *sim, const u32 capacity);
 void particle_add(particle_sim_t *sim, const i32 x, const i32 y);
-i32 particle_render(particle_sim_t *sim, u16 color);
+i32 particle_render(particle_sim_t *sim, const u16 color);
 void particle_float(particle_sim_t *sim, const i32 x, const i32 y, 
                     const f32 update_time);
 void particle_rain(particle_sim_t *sim, const i32 x, const i32 y, 
-                   const f32 update_time);
+                   const veci2 dir, const f32 update_time);
 void particle_sim_destroy(particle_sim_t *sim);
 
 #endif
