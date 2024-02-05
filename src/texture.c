@@ -5,55 +5,48 @@ texture_t textures[TEXTURE_MAX];
 
 i32 texture_create(const char *source, const u32 type) 
 {
-  i32 width, height, bytes_per_pixel;
   i32 success = 0;
-  texture_t *texture = &textures[type];
-  FILE *image = fopen(source, "rb");
-  ASSERT(image == NULL, "error opening bitmap file\n");
 
-  fscanf(image, "width=%i\n", &width);
-  fscanf(image, "height=%i\n", &height);
-  fscanf(image, "bytes_per_pixel=%i\n", &bytes_per_pixel);
+  FILE *in = fopen(source, "rb");
+  ASSERT(in == NULL, "error opening bitmap file\n");
 
-  if (texture->pixels != NULL) free(texture->pixels);
-  texture->pixels = (u16 *)malloc(sizeof(u32) * width * height);
-  ASSERT(texture->pixels == NULL, "error allocating memory to pixels\n");
+  fscanf(in, "width=%u\n", &textures[type].width);
+  fscanf(in, "height=%u\n", &textures[type].height);
+  fscanf(in, "bytes_per_pixel=%u\n", &textures[type].bytes_per_pixel);
+
+  if (textures[type].pixels != NULL) free(textures[type].pixels);
+  textures[type].pixels = 
+    (u16 *)malloc(sizeof(u32) * textures[type].width * textures[type].height);
+  ASSERT(textures[type].pixels == NULL, "error allocating memory to pixels\n");
 
   u32 buffer;
-  for (i32 i = 0; i < height; i++) 
+  for (i32 i = 0; i < textures[type].height; i++) 
   {
-    for (i32 j = 0; j < width; j++) 
+    for (i32 j = 0; j < textures[type].width; j++) 
     {
-      fscanf(image, "%x ", &buffer);
-      texture->pixels[i * width + j] = (u16)buffer;
+      fscanf(in, "%x ", &buffer);
+      textures[type].pixels[i * textures[type].width + j] = (u16)buffer;
     }
-    fscanf(image, "\n");
+    fscanf(in, "\n");
   }
-
-  fclose(image);
-
-  texture->width = width;
-  texture->height = height;
-  texture->bytes_per_pixel = bytes_per_pixel;
 
   return success;
 }
 
 i32 texture_render(const i32 x, const i32 y, const u32 type) 
 {
-  texture_t texture = textures[type];
   i32 success = 0;
 
-  for (u32 i = 0; i < texture.height; i++) 
+  for (u32 i = 0; i < textures[type].height; i++) 
   {
-    for (u32 j = 0; j < texture.width; j++) 
+    for (u32 j = 0; j < textures[type].width; j++) 
     {
       i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
 
       if (is_valid_pixel(pixels_index, x + j, y + i))
       {
         ALPHA_OVER(state.pixels[pixels_index],
-                         texture.pixels[i * texture.width + j],
+                         textures[type].pixels[i * textures[type].width + j],
                          state.pixels[pixels_index]);
       }
       else success = 1;
@@ -65,7 +58,6 @@ i32 texture_render(const i32 x, const i32 y, const u32 type)
 
 void texture_destroy(const u32 type) 
 {
-  texture_t *texture = &textures[type];
-  free(texture->pixels);
-  texture->pixels = NULL;
+  free(textures[type].pixels);
+  textures[type].pixels = NULL;
 }
