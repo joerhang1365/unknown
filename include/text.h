@@ -20,6 +20,6 @@ typedef struct
   i32 length;
 } text_t;
 
-i32 text_render(const text_t text, const font_t font, const i32 x, const i32 y);
+void text_render(const text_t text, const font_t font, const i32 x, const i32 y);
 
 #endif

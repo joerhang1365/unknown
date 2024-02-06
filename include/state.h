@@ -59,16 +59,17 @@ static inline veci2 find_position(const char c, const u32 instance_num)
     for (u32 j = 0; j < state.rows; j++)
     {
       char tile = get_type(i, j);
-      if (tile == c)
+
+      if (tile != c) continue;
+      if (instance != instance_num)
       {
-        if (instance == instance_num)
-        {
-          temp = veci2_create(i, j);
-          VECI2_SCALE(temp, state.tile_size);
-          break;
-        }
         instance++;
+        continue;
       }
+
+      temp = veci2_create(i, j);
+      VECI2_SCALE(temp, state.tile_size);
+      break;
     }
   }
 

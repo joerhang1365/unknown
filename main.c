@@ -402,10 +402,6 @@ i32 main(i32 argc, char *argv[])
         }
       }
     }
-    else 
-    {
-      sun_shadows(veci2_create(0, 0), 8);
-    }
 
     /* girl */
     if (state.girl_show) 

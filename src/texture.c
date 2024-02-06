@@ -3,10 +3,8 @@
 
 texture_t textures[TEXTURE_MAX];
 
-i32 texture_create(const char *source, const u32 type) 
+void texture_create(const char *source, const u32 type) 
 {
-  i32 success = 0;
-
   FILE *in = fopen(source, "rb");
   ASSERT(in == NULL, "error opening bitmap file\n");
 
@@ -29,31 +27,23 @@ i32 texture_create(const char *source, const u32 type)
     }
     fscanf(in, "\n");
   }
-
-  return success;
 }
 
-i32 texture_render(const i32 x, const i32 y, const u32 type) 
+void texture_render(const i32 x, const i32 y, const u32 type) 
 {
-  i32 success = 0;
-
   for (u32 i = 0; i < textures[type].height; i++) 
   {
     for (u32 j = 0; j < textures[type].width; j++) 
     {
       i32 pixels_index = (i + y) * SCREEN_WIDTH + j + x;
 
-      if (is_valid_pixel(pixels_index, x + j, y + i))
-      {
-        ALPHA_OVER(state.pixels[pixels_index],
-                         textures[type].pixels[i * textures[type].width + j],
-                         state.pixels[pixels_index]);
-      }
-      else success = 1;
+      if (!is_valid_pixel(pixels_index, x + j, y + i)) continue;
+      
+      ALPHA_OVER(state.pixels[pixels_index],
+          textures[type].pixels[i * textures[type].width + j],
+          state.pixels[pixels_index]);
     }
   }
-
-  return success;
 }
 
 void texture_destroy(const u32 type) 
