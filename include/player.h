@@ -2,7 +2,6 @@
 #define PLAYER_H
 
 #include "globals.h"
-#include "state.h"
 #include "animator.h"
 
 #define PLAYER_WIDTH 8
@@ -26,5 +25,8 @@ extern player_t player;
 
 byte player_touch(char c);
 void player_load();
+void player_movement(const u32 key);
+void player_collision(const u32 columns, const u32 rows, const u32 tile_size);
+void player_animation(const u32 key);
 
 #endif

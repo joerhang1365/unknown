@@ -68,7 +68,7 @@ static inline veci2 find_position(const char c, const u32 instance_num)
       }
 
       temp = veci2_create(i, j);
-      VECI2_SCALE(temp, state.tile_size);
+      veci2_scale(&temp, state.tile_size);
       break;
     }
   }

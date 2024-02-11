@@ -1,8 +1,4 @@
 #include "lighting.h"
-#include "globals.h"
-#include "state.h"
-#include "texture.h"
-#include <stdio.h>
 
 void light(const i32 x, const i32 y, u32 radius, const u32 flicker,
           const u32 accuracy)

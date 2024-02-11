@@ -52,8 +52,17 @@ static inline veci2 vec2_to_veci2(const vec2 vec2)
   return veci2_create(vec2.x, vec2.y);
 }
 
-#define VEC2_SCALE(v, _s) (v).x = (v).x * (f32)_s; (v).y = (v).y * (f32)_s;
-#define VECI2_SCALE(v, _s) (v).x = (v).x * (i32)_s; (v).y = (v).y * (i32)_s;
+static inline void vec2_scale(vec2 *vec2, const f32 scale)
+{
+  vec2->x *= scale;
+  vec2->y *= scale;
+}
+
+static inline void veci2_scale(veci2 *veci2, const i32 scale)
+{
+  veci2->x *= scale;
+  veci2->y *= scale;
+}
 
 #define LEFT_SHIFT(_arr, _new, _size) \
   for(u32 i = 0; i < _size - 1; i++) \

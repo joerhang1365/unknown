@@ -9,7 +9,7 @@ void font_create(font_t *font, const u16 color, const char *source)
   fscanf(in, "width=%u\n", &font->width);
   fscanf(in, "height=%u\n", &font->height);
 
-  if(font->data != NULL) free(font->data);
+  if (font->data != NULL) free(font->data);
   font->data = malloc(sizeof(i32) * 27 * font->height);
   ASSERT(font->data == NULL, "failed to allocate memory to font data\n");
 
@@ -48,7 +48,10 @@ void text_render(const text_t text, const font_t font, const i32 x,
 
     switch(text.message[i])
     {
-      case '\n': row++; offset = i + 1; value = 0; break;
+      case '\n': row++; 
+                 offset = i + 1; 
+                 value = 0; 
+                 break;
       case ' ': value = 0; break;
       default: value = text.message[i] - 'a' + 1; break;
     }
@@ -64,10 +67,9 @@ void text_render(const text_t text, const font_t font, const i32 x,
 
         if (!is_valid_pixel(pixels_index, x, y)) continue;
 
-        u32 pixel;
+        u32 pixel = state.pixels[pixels_index];
 
         if (data > 0x7) pixel = font.color; // this only works for width 4
-        else pixel = state.pixels[pixels_index];
 
         // left shift and only store last 4 bits
         data = (data << 1) & 0xF;
