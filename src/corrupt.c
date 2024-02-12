@@ -1,5 +1,4 @@
 #include "corrupt.h"
-#include "globals.h"
 
 void corrupt_load(corruption_t *corruption) 
 {

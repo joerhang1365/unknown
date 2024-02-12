@@ -1,7 +1,7 @@
 #include "lighting.h"
 
 void light(const i32 x, const i32 y, u32 radius, const u32 flicker,
-          const u32 accuracy)
+          const u32 accuracy, const veci2 camera)
 {
   // add flicker to light
   if ((u32)TIME % 2 == 0) radius += flicker; 

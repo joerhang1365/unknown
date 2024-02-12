@@ -15,6 +15,7 @@ typedef struct
 
   byte debug;
   byte quit;
+  byte button;
 
   /* map */
   u32 columns;
@@ -29,6 +30,12 @@ typedef struct
   /* text */
   u32 text_size;
   text_t *texts;
+  font_t font;
+  byte text_show;
+  u32 text_index;
+
+  veci2 camera;
+
 } state_t;
 
 extern state_t state;

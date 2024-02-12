@@ -16,7 +16,7 @@ void particle_add(particle_sim_t *sim, const i32 x, const i32 y)
   if (sim->size < sim->capacity) sim->size++;
 }
 
-void particle_render(particle_sim_t *sim, const u16 color)
+void particle_render(particle_sim_t *sim, const u16 color, const veci2 camera)
 {
   for (u32 i = 0; i < sim->size; i++) 
   {

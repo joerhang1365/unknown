@@ -1,5 +1,4 @@
 #include "texture.h"
-#include "globals.h"
 
 texture_t textures[TEXTURE_MAX];
 
@@ -40,8 +39,8 @@ void texture_render(const i32 x, const i32 y, const u32 type)
       if (!is_valid_pixel(pixels_index, x + j, y + i)) continue;
       
       ALPHA_OVER(state.pixels[pixels_index],
-          textures[type].pixels[i * textures[type].width + j],
-          state.pixels[pixels_index]);
+                textures[type].pixels[i * textures[type].width + j],
+                state.pixels[pixels_index]);
     }
   }
 }

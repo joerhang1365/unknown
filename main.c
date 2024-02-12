@@ -21,12 +21,6 @@ veci2 rain_dir;
 
 corruption_t corruption;
 
-font_t font;
-byte text_show;
-u32 text_index;
-
-byte button;
-
 static void initialize()
 {
   ASSERT(SDL_Init(SDL_INIT_VIDEO) > 0, "failed to initialize video\n");
@@ -61,9 +55,6 @@ static void initialize()
   map_src[7] = "maps/corruption.map";
   map_src[8] = "maps/restart.map";
 
-  /* camera */
-  camera = veci2_create(0, 0);
-
   state_load(map_src[map_index]);
   player_load();
 
@@ -77,15 +68,8 @@ static void initialize()
   corrupt_load(&corruption);
 
   /* font */
-  font.data = NULL; // need this for sum reason
-  font_create(&font, 0xFFFF, "font_data");
-
-  /* text */
-  text_show = 0;
-  text_index = 0;
-
-  /* da button */
-  button = 0;
+  state.font.data = NULL; // need this for sum reason
+  font_create(&state.font, 0xFFFF, "font_data");
 
   /* textures */
   texture_create("textures/player.txt", PLAYER_TXT);
@@ -140,8 +124,6 @@ static void next(const u32 index)
   state_load(map_src[index]);
   player_load();
   corrupt_load(&corruption);
-  camera = veci2_create(0, 0);
-  button = 0;
 }
 
 static void debug(const u32 key)
@@ -165,25 +147,25 @@ static void debug(const u32 key)
 static void camera_update()
 {
   /* player camera */
-  if (player.pos.x > camera.x + 12 * state.tile_size &&
-      camera.x < (state.columns - 16) * state.tile_size) 
+  if (player.pos.x > state.camera.x + 12 * state.tile_size &&
+      state.camera.x < (state.columns - 16) * state.tile_size) 
   {
-    camera.x += round(CAMERA_SPEED);
+    state.camera.x += round(CAMERA_SPEED);
   } 
-  else if (player.pos.x < camera.x + 4 * state.tile_size &&
-           camera.x > 0) 
+  else if (player.pos.x < state.camera.x + 4 * state.tile_size &&
+           state.camera.x > 0) 
   {
-    camera.x -= round(CAMERA_SPEED);
+    state.camera.x -= round(CAMERA_SPEED);
   } 
-  else if (player.pos.y > camera.y + 12 * state.tile_size &&
-           camera.y < (state.columns - 16) * state.tile_size) 
+  else if (player.pos.y > state.camera.y + 12 * state.tile_size &&
+           state.camera.y < (state.columns - 16) * state.tile_size) 
   {
-    camera.y += round(CAMERA_SPEED);
+    state.camera.y += round(CAMERA_SPEED);
   } 
-  else if (player.pos.y < camera.y + 4 * state.tile_size &&
-           camera.y > 0) 
+  else if (player.pos.y < state.camera.y + 4 * state.tile_size &&
+           state.camera.y > 0) 
   {
-    camera.y -= round(CAMERA_SPEED);
+    state.camera.y -= round(CAMERA_SPEED);
   }
 }
 
@@ -196,10 +178,10 @@ static void update()
   player_animation(state.key);
 
   /* text box */
-  text_show = 0;
-  if (player_touch('T')) text_show = 1;
+  state.text_show = 0;
+  if (player_touch('T')) state.text_show = 1;
   /* button */
-  else if (player_touch('B')) button = 1;
+  else if (player_touch('B')) state.button = 1;
   /* next map */
   else if (player_touch('>')) next(++map_index);
   /* corruption */
@@ -210,22 +192,22 @@ static void update()
   animator_update(2.0f, FLOWER_ANIM);
   animator_update(0.25f, WATER_ANIM);
 
-  if (text_show)
+  if (state.text_show)
   {
-    if (state.key == X && text_index < state.text_size - 1) 
+    if (state.key == X && state.text_index < state.text_size - 1) 
     {
-      text_index++;
+      state.text_index++;
       state.key = NONE;
     }
   }
-  else text_index = 0;
+  else state.text_index = 0;
 
-  if (button) animator_set_index(1, BUTTON_ANIM);
+  if (state.button) animator_set_index(1, BUTTON_ANIM);
   else animator_set_index(0, BUTTON_ANIM);
 
   /* particle */
   particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
-  particle_rain(&rain_sim, camera.x, camera.y, rain_dir, 0.1f);
+  particle_rain(&rain_sim, state.camera.x, state.camera.y, rain_dir, 0.1f);
 
   camera_update();
  
@@ -252,16 +234,16 @@ static void render()
     state.pixels[i] = state.background_color;
   }
 
-  const u32 camera_column = (f32)camera.y / state.tile_size;
-  const u32 camera_row = (f32)camera.x / state.tile_size;
+  const u32 camera_column = (f32)state.camera.y / state.tile_size;
+  const u32 camera_row = (f32)state.camera.x / state.tile_size;
 
   /* map tiles */
   for (u32 i = camera_column; i < camera_column + SCREEN_TILES + 1; i++) 
   {
     for (u32 j = camera_row; j < camera_row + SCREEN_TILES + 1; j++) 
     {
-      const i32 x = j * state.tile_size - camera.x;
-      const i32 y = i * state.tile_size - camera.y;
+      const i32 x = j * state.tile_size - state.camera.x;
+      const i32 y = i * state.tile_size - state.camera.y;
       switch (get_type(j, i)) 
       {
         case 't': texture_render(x, y, TILE_TXT); break;
@@ -285,7 +267,7 @@ static void render()
   switch (state.weather)
   {
     case CLEAR: break;
-    case RAIN: particle_render(&rain_sim, 0x008F); break;
+    case RAIN: particle_render(&rain_sim, 0x008F, state.camera); break;
     default: break;
   } 
 
@@ -297,15 +279,15 @@ static void render()
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
       light(player.pos.x + PLAYER_WIDTH_2, 
             player.pos.y + PLAYER_HEIGHT_2,
-            32, 2, 360);
+            32, 2, 360, state.camera);
 
       /* glowy tiles */
       for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
       {
         for (u32 j = camera_row; j < camera_row + SCREEN_TILES; j++) 
         {
-          const i32 x = j * state.tile_size - camera.x;
-          const i32 y = i * state.tile_size - camera.y;
+          const i32 x = j * state.tile_size - state.camera.x;
+          const i32 y = i * state.tile_size - state.camera.y;
           switch (get_type(j, i)) 
           {
             case 'T': glow(x, y, T_TXT); break;
@@ -319,17 +301,17 @@ static void render()
   }
 
   /* girl */
-  if (state.girl_show) texture_render(player.prev_pos[0].x - camera.x, 
-                                      player.prev_pos[0].y - camera.y,
+  if (state.girl_show) texture_render(player.prev_pos[0].x - state.camera.x, 
+                                      player.prev_pos[0].y - state.camera.y,
                                       GIRL_TXT);
 
   /* player */
-  particle_render(&player_float_sim, 0x00FF);
-  animator_render(player.pos.x - camera.x, player.pos.y - camera.y, 
+  particle_render(&player_float_sim, 0x00FF, state.camera);
+  animator_render(player.pos.x - state.camera.x, player.pos.y - state.camera.y, 
                   PLAYER_ANIM);
  
   /* text */
-  if (text_show) text_render(state.texts[text_index], font, 32, 98);
+  if (state.text_show) text_render(state.texts[state.text_index], state.font, 32, 98);
 
   /* change color value based on alpha value */
   for(u32 i = 0; i < SCREEN_MAX; i++)
@@ -371,8 +353,6 @@ static void destroy()
   texture_destroy(WATER_TXT);
   texture_destroy(GIRL_TXT);
   texture_destroy(CORRUPTION_TXT);
-
-  font_destroy(&font);
   state_destroy();
   corrupt_destroy(&corruption);
   particle_sim_destroy(&player_float_sim);

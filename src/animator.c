@@ -1,5 +1,4 @@
 #include "animator.h"
-#include "globals.h"
 
 animator_t animations[ANIMATION_MAX];
 
@@ -46,8 +45,8 @@ void animator_render(const i32 x, const i32 y, const u32 type)
       if(!is_valid_pixel(pixels_index, x + j, y + i)) continue;
 
         ALPHA_OVER(state.pixels[pixels_index], 
-            animator_pixel,
-            state.pixels[pixels_index]);
+                  animator_pixel,
+                  state.pixels[pixels_index]);
     }
   }
 }

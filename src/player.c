@@ -1,6 +1,4 @@
 #include "player.h"
-#include "globals.h"
-#include "state.h"
 
 player_t player;
 

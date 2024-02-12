@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include "globals.h"
+#include "state.h"
 #include "animator.h"
 
 #define PLAYER_WIDTH 8

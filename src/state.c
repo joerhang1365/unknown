@@ -1,4 +1,5 @@
 #include "state.h"
+#include "globals.h"
 
 state_t state;
 
@@ -56,6 +57,13 @@ void state_load(const char *source)
   }
 
   fclose(in);
+
+  state.button = 0;
+  state.key = NONE;
+  state.text_show = 0;
+  state.text_index = 0;
+
+  state.camera = veci2_create(0, 0);
 }
 
 void state_destroy() 
@@ -78,6 +86,10 @@ void state_destroy()
   state.girl_show = 0;
   state.text_size = 0;
   state.background_color = 0;
+  state.text_index = 0;
+  state.text_show = 0;
+  state.key = 0;
+  state.button = 0;
 
   for (u32 i = 0; i < SCREEN_MAX; i++) 
   {

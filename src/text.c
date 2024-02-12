@@ -37,7 +37,7 @@ void font_destroy(font_t *font)
 
 // this is a fucking mess
 void text_render(const text_t text, const font_t font, const i32 x,
-                const i32 y) 
+                 const i32 y) 
 {
   u32 row = 0;
   u32 offset = 0;
@@ -48,10 +48,7 @@ void text_render(const text_t text, const font_t font, const i32 x,
 
     switch(text.message[i])
     {
-      case '\n': row++; 
-                 offset = i + 1; 
-                 value = 0; 
-                 break;
+      case '\n': row++; offset = i + 1; value = 0; break;
       case ' ': value = 0; break;
       default: value = text.message[i] - 'a' + 1; break;
     }
