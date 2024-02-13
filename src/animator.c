@@ -10,7 +10,7 @@ void animator_create(const u32 width, const u32 height,
   animations[type].width = width;
   animations[type].height = height;
   animations[type].number_of_frames = number_of_frames;
-  animations[type].frame = 0.0f;
+  animations[type].frame = 0;
   animations[type].index = 0;
 }
 
@@ -22,11 +22,11 @@ void animator_set_index(const u32 frame, const u32 type)
 void animator_update(const f32 framerate, const u32 type) 
 {
   animations[type].index = animations[type].frame / framerate;
-  animations[type].frame += DELTA_TIME;
+  animations[type].frame += 1;
 
   if (animations[type].index > animations[type].number_of_frames - 1) 
   {
-    animations[type].frame = 0.0f;
+    animations[type].frame = 0;
     animations[type].index = 0;
   }
 }

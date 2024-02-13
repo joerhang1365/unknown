@@ -1,5 +1,4 @@
 #include "state.h"
-#include "globals.h"
 
 state_t state;
 
@@ -63,7 +62,7 @@ void state_load(const char *source)
   state.text_show = 0;
   state.text_index = 0;
 
-  state.camera = veci2_create(0, 0);
+  state.camera = vec2_create(0, 0);
 }
 
 void state_destroy() 

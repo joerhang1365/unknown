@@ -7,7 +7,7 @@
 #define CORRUPT_SPEED state.tile_size
 #define CORRUPT_TIME 4
 
-typedef veci2 corrupt_t;
+typedef vec2 corrupt_t;
 
 typedef struct
 {

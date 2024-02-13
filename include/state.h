@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "text.h"
+#include "camera.h"
 
 typedef struct 
 {
@@ -34,7 +35,7 @@ typedef struct
   byte text_show;
   u32 text_index;
 
-  veci2 camera;
+  camera_t camera;
 
 } state_t;
 
@@ -57,10 +58,18 @@ static inline byte is_type(const f32 x, const f32 y, const char c)
   return (tile == c);
 }
 
-static inline veci2 find_position(const char c, const u32 instance_num)
+static inline byte is_tile(const f32 x, const f32 y, const u32 width, const u32 height, const char c)
+{
+  return is_type(x, y, c) ||
+         is_type(x + width - 1, y, c) ||
+         is_type(x, y + height - 1, c) ||
+         is_type(x + width - 1, y + height - 1, c);
+}
+
+static inline vec2 find_position(const char c, const u32 instance_num)
 {
   u32 instance = 0;
-  veci2 temp = veci2_create(0, 0);
+  vec2 temp = vec2_create(0, 0);
   for (u32 i = 0; i < state.columns; i++)
   {
     for (u32 j = 0; j < state.rows; j++)
@@ -74,8 +83,8 @@ static inline veci2 find_position(const char c, const u32 instance_num)
         continue;
       }
 
-      temp = veci2_create(i, j);
-      veci2_scale(&temp, state.tile_size);
+      temp = vec2_create(i, j);
+      vec2_scale(&temp, state.tile_size);
       break;
     }
   }

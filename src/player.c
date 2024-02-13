@@ -2,15 +2,6 @@
 
 player_t player;
 
-byte player_touch(char c) 
-{
-  return 
-    is_type(player.pos.x, player.pos.y, c) ||
-    is_type(player.pos.x + player.width - 1, player.pos.y, c) ||
-    is_type(player.pos.x, player.pos.y + player.height - 1, c) ||
-    is_type(player.pos.x + player.width - 1, player.pos.y + player.height - 1, c);
-}
-
 void player_load() 
 {
   player.width = PLAYER_WIDTH;
@@ -36,32 +27,25 @@ void player_movement(const u32 key)
     case RIGHT: player.dir.x = 1; break;
     case UP:    player.dir.y = -1; break;
     case DOWN:  player.dir.y = 1; break;
-    default:   player.dir.x = 0; player.dir.y = 0;
-  }
-      
-  if (key == LEFT ||
-      key == RIGHT ||
-      key == UP ||
-      key == DOWN)
-  {
-    LEFT_SHIFT(player.prev_pos, player.pos, PLAYER_PREVIOUS);
+    default:   player.dir.x = 0; player.dir.y = 0; break;
   }
 
-  player.pos.x += round(player.dir.x * PLAYER_SPEED);
-  player.pos.y += round(player.dir.y * PLAYER_SPEED);
+  if (player.dir.x == 0 && player.dir.y == 0) return;
+
+  // update past positions
+  LEFT_SHIFT(player.prev_pos, player.pos, PLAYER_PREVIOUS);
+
+  player.pos.x += player.dir.x * PLAYER_SPEED;
+  player.pos.y += player.dir.y * PLAYER_SPEED;
 }
 
 void player_collision(const u32 columns, const u32 rows, const u32 tile_size)
 {
-  if (player_touch('R') || player_touch('w') ||
-      player_touch('G') || player.pos.x < 0 ||
-      player.pos.x > (columns - 1) * tile_size ||
-      player.pos.y < 1 ||
-      player.pos.y > (rows - 1) * tile_size) 
-  {
-    player.pos.x -= round(player.dir.x * PLAYER_SPEED);
-    player.pos.y -= round(player.dir.y * PLAYER_SPEED);
-  } 
+  if (!is_tile(player.pos.x, player.pos.y, player.width, player.height, 'R') &&
+      !is_tile(player.pos.x, player.pos.y, player.width, player.height, 'w')) return;
+
+  player.pos.x -= player.dir.x * PLAYER_SPEED;
+  player.pos.y -= player.dir.y * PLAYER_SPEED;
 }
 
 void player_animation(const u32 key)

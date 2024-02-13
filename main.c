@@ -7,9 +7,9 @@
 #include "state.h"
 #include "text.h"
 #include "texture.h"
+#include "camera.h"
 
 #define MAP_SIZE 9
-#define CAMERA_SPEED 64 * DELTA_TIME
 #define SCREEN_TILES SCREEN_WIDTH / state.tile_size
 
 u32 map_index;
@@ -144,31 +144,6 @@ static void debug(const u32 key)
   }
 }
 
-static void camera_update()
-{
-  /* player camera */
-  if (player.pos.x > state.camera.x + 12 * state.tile_size &&
-      state.camera.x < (state.columns - 16) * state.tile_size) 
-  {
-    state.camera.x += round(CAMERA_SPEED);
-  } 
-  else if (player.pos.x < state.camera.x + 4 * state.tile_size &&
-           state.camera.x > 0) 
-  {
-    state.camera.x -= round(CAMERA_SPEED);
-  } 
-  else if (player.pos.y > state.camera.y + 12 * state.tile_size &&
-           state.camera.y < (state.columns - 16) * state.tile_size) 
-  {
-    state.camera.y += round(CAMERA_SPEED);
-  } 
-  else if (player.pos.y < state.camera.y + 4 * state.tile_size &&
-           state.camera.y > 0) 
-  {
-    state.camera.y -= round(CAMERA_SPEED);
-  }
-}
-
 static void update()
 {
   debug(state.key);
@@ -179,18 +154,22 @@ static void update()
 
   /* text box */
   state.text_show = 0;
-  if (player_touch('T')) state.text_show = 1;
+  if (is_tile(player.pos.x, player.pos.y, player.width, player.height, 'T'))
+    state.text_show = 1;
   /* button */
-  else if (player_touch('B')) state.button = 1;
+  else if (is_tile(player.pos.x, player.pos.y, player.width, player.height, 'B')) 
+    state.button = 1;
   /* next map */
-  else if (player_touch('>')) next(++map_index);
+  else if (is_tile(player.pos.x, player.pos.y, player.width, player.height, '>')) 
+    next(++map_index);
   /* corruption */
-  else if (player_touch('C')) next(2);
+  else if (is_tile(player.pos.x, player.pos.y, player.width, player.height, 'C')) 
+    next(2);
       
   /* animations */
-  animator_update(0.5f, GRASS_ANIM);
-  animator_update(2.0f, FLOWER_ANIM);
-  animator_update(0.25f, WATER_ANIM);
+  animator_update(24, GRASS_ANIM);
+  animator_update(48, FLOWER_ANIM);
+  animator_update(24, WATER_ANIM);
 
   if (state.text_show)
   {
@@ -209,10 +188,12 @@ static void update()
   particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
   particle_rain(&rain_sim, state.camera.x, state.camera.y, rain_dir, 0.1f);
 
-  camera_update();
+  //camera_update();
+  camera_follow(player.pos, 8, 4, &state.camera);
  
   /* corruption */
   corrupt_update(&corruption, veci2_create(player.pos.x, player.pos.y));
+
   for (u32 i = 0; i < corruption.count; i++) 
   {
     /* makes is look spooky */
@@ -277,7 +258,7 @@ static void render()
     case LIGHT: break;
     case DARK:
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
-      light(player.pos.x + PLAYER_WIDTH_2, 
+      light_source(player.pos.x + PLAYER_WIDTH_2,
             player.pos.y + PLAYER_HEIGHT_2,
             32, 2, 360, state.camera);
 

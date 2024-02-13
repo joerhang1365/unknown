@@ -1,7 +1,7 @@
 #include "lighting.h"
 
-void light(const i32 x, const i32 y, u32 radius, const u32 flicker,
-          const u32 accuracy, const veci2 camera)
+void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
+          const u32 accuracy, const camera_t camera)
 {
   // add flicker to light
   if ((u32)TIME % 2 == 0) radius += flicker; 
@@ -35,8 +35,8 @@ void light(const i32 x, const i32 y, u32 radius, const u32 flicker,
       }
 
       const u16 texture_pixel = 
-        texture.pixels[(cylindrical_y - (row * state.tile_size - camera.y)) *
-        textures[ROCK_TXT].width + cylindrical_x - (column * state.tile_size - camera.x)];
+        texture.pixels[(cylindrical_y - (row * state.tile_size - (i32)camera.y)) *
+        textures[ROCK_TXT].width + cylindrical_x - (column * state.tile_size - (i32)camera.x)];
 
       if (texture_pixel != 0x0000) solid = 1;
       if (solid == 1 && texture_pixel == 0x0000) break;

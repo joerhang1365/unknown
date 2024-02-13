@@ -11,7 +11,7 @@ typedef struct
   u32 width, height;
   u32 index;
   u32 number_of_frames;
-  f32 frame;
+  u32 frame;
 } animator_t;
 
 enum ANIMATIONS { PLAYER_ANIM, GRASS_ANIM, FLOWER_ANIM, WATER_ANIM, 

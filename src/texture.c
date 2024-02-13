@@ -11,9 +11,9 @@ void texture_create(const char *source, const u32 type)
   fscanf(in, "height=%u\n", &textures[type].height);
   fscanf(in, "bytes_per_pixel=%u\n", &textures[type].bytes_per_pixel);
 
-  if (textures[type].pixels != NULL) free(textures[type].pixels);
-  textures[type].pixels = 
-    (u16 *)malloc(sizeof(u32) * textures[type].width * textures[type].height);
+  if (textures[type].pixels == NULL)
+    textures[type].pixels = (u16 *)malloc(sizeof(u32) * 
+                            textures[type].width * textures[type].height);
   ASSERT(textures[type].pixels == NULL, "error allocating memory to pixels\n");
 
   u32 buffer;
@@ -47,6 +47,7 @@ void texture_render(const i32 x, const i32 y, const u32 type)
 
 void texture_destroy(const u32 type) 
 {
-  free(textures[type].pixels);
+  if (textures[type].pixels != NULL) 
+    free(textures[type].pixels);
   textures[type].pixels = NULL;
 }

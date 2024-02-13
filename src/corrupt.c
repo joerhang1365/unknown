@@ -64,7 +64,8 @@ void corrupt_update(corruption_t *corruption, veci2 target)
 
 void corrupt_destroy(corruption_t *corruption) 
 {
-  free(corruption->corrupts);
+  if (corruption->corrupts != NULL)
+    free(corruption->corrupts);
   corruption->corrupts = NULL;
   corruption->count = 0;
 }

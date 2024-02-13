@@ -3,7 +3,8 @@
 
 void particle_sim_create(particle_sim_t *sim, u32 capacity) 
 {
-  sim->particles = malloc(sizeof(particle_t) * capacity);
+  if (sim->particles == NULL)
+    sim->particles = malloc(sizeof(particle_t) * capacity);
   sim->size = 0;
   sim->capacity = capacity;
 }
@@ -16,7 +17,7 @@ void particle_add(particle_sim_t *sim, const i32 x, const i32 y)
   if (sim->size < sim->capacity) sim->size++;
 }
 
-void particle_render(particle_sim_t *sim, const u16 color, const veci2 camera)
+void particle_render(particle_sim_t *sim, const u16 color, const camera_t camera)
 {
   for (u32 i = 0; i < sim->size; i++) 
   {
@@ -67,7 +68,7 @@ void particle_rain(particle_sim_t *sim, const i32 x, const i32 y, const veci2 di
 
 void particle_sim_destroy(particle_sim_t *sim) 
 {
-  free(sim->particles);
+  if (sim->particles != NULL) free(sim->particles);
   sim->size = 0;
   sim->capacity = 0;
 }
