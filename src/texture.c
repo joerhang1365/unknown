@@ -11,8 +11,10 @@ void texture_create(const char *source, const u32 type)
   fscanf(in, "height=%u\n", &textures[type].height);
   fscanf(in, "bytes_per_pixel=%u\n", &textures[type].bytes_per_pixel);
 
-  if (textures[type].pixels == NULL)
-    textures[type].pixels = malloc(sizeof(u16) * 
+  if (textures[type].pixels != NULL)
+    free(textures[type].pixels);
+
+  textures[type].pixels = malloc(sizeof(u16) * 
                             textures[type].width * textures[type].height);
   ASSERT(textures[type].pixels == NULL, "error allocating memory to pixels\n");
 

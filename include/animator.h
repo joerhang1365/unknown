@@ -7,7 +7,7 @@
 
 typedef struct
 {
-  texture_t texture_map;
+  texture_t *textures;
   u32 width, height;
   u32 index;
   u32 number_of_frames;
@@ -27,5 +27,6 @@ void animator_update(const f32 framerate, const u32 type);
 /* make sure to free after calling */
 texture_t animator_texture(const u32 type);
 void animator_render(const i32 x, const i32 y, const u32 type);
+void animator_destroy(const u32 type);
 
 #endif

@@ -332,17 +332,16 @@ static void destroy()
     map_src[i] = NULL;
   }
 
-  texture_destroy(PLAYER_TXT);
-  texture_destroy(TILE_TXT);
-  texture_destroy(BLANK_TXT);
-  texture_destroy(GRASS_TXT);
-  texture_destroy(FLOWER_TXT);
-  texture_destroy(NEXT_TXT);
-  texture_destroy(P_TXT);
-  texture_destroy(ROCK_TXT);
-  texture_destroy(WATER_TXT);
-  texture_destroy(GIRL_TXT);
-  texture_destroy(CORRUPTION_TXT);
+  for (u32 i = 0; i < TEXTURE_MAX; i++)
+  {
+    texture_destroy(i);
+  }
+
+  for (u32 i = 0; i < ANIMATION_MAX; i++)
+  {
+    animator_destroy(i);
+  }
+
   state_destroy();
   corrupt_destroy(&corruption);
   particle_sim_destroy(&player_float_sim);
