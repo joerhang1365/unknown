@@ -24,6 +24,8 @@ void animator_create(const u32 width, const u32 height,
                      const u32 text_type);
 void animator_set_index(const u32 frame, const u32 type);
 void animator_update(const f32 framerate, const u32 type);
+/* make sure to free after calling */
+texture_t animator_texture(const u32 type);
 void animator_render(const i32 x, const i32 y, const u32 type);
 
 #endif

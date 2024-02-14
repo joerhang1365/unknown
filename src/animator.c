@@ -31,6 +31,32 @@ void animator_update(const f32 framerate, const u32 type)
   }
 }
 
+/* make sure to free after calling */
+texture_t animator_texture(const u32 type)
+{
+  texture_t texture;
+  texture.width = animations[type].width;
+  texture.height = animations[type].height;
+  texture.pixels = malloc(sizeof(u16) * 
+                   animations[type].width * animations[type].height);
+  ASSERT(texture.pixels == NULL, "error allocating memory to pixels\n");
+
+  for (u32 i = 0; i < animations[type].height; i++) 
+  {
+    for (u32 j = 0; j < animations[type].width; j++) 
+    {
+      const i32 pixels_index = i * texture.width + j;
+      const u32 animator_index = i * animations[type].texture_map.width + j +
+                                 animations[type].width * animations[type].index;
+      const u16 animator_pixel = animations[type].texture_map.pixels[animator_index];
+
+      texture.pixels[pixels_index] = animator_pixel;
+    }
+  }
+
+  return texture;
+}
+
 void animator_render(const i32 x, const i32 y, const u32 type) 
 {
   for (u32 i = 0; i < animations[type].height; i++) 
@@ -44,9 +70,9 @@ void animator_render(const i32 x, const i32 y, const u32 type)
 
       if(!is_valid_pixel(pixels_index, x + j, y + i)) continue;
 
-        ALPHA_OVER(state.pixels[pixels_index], 
-                  animator_pixel,
-                  state.pixels[pixels_index]);
+      ALPHA_OVER(state.pixels[pixels_index], 
+                animator_pixel,
+                state.pixels[pixels_index]);
     }
   }
 }

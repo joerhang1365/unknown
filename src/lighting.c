@@ -1,4 +1,6 @@
 #include "lighting.h"
+#include "animator.h"
+#include "texture.h"
 
 void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
           const u32 accuracy, const camera_t camera)
@@ -23,27 +25,44 @@ void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
       // if so wait until type is no longer solid then break
       const u32 column = (f32)(cylindrical_x + camera.x) / state.tile_size;
       const u32 row = (f32)(cylindrical_y + camera.y) / state.tile_size;
-      const char type = get_type(column, row);
 
       // making shadows pixel accurate and shit
       texture_t texture;
-      switch (type) 
+      const char c = get_type(column, row);
+      switch (c) 
       {
         case 'R': texture = textures[ROCK_TXT]; break;
         case 'G': texture = textures[GIRL_TXT]; break;
+        case 'g': texture = animator_texture(GRASS_ANIM); break;
+        case 'f': texture = animator_texture(FLOWER_ANIM); break;
         default: texture = textures[BLANK_TXT]; break;
       }
 
-      const u16 texture_pixel = 
-        texture.pixels[(cylindrical_y - (row * state.tile_size - (i32)camera.y)) *
-        textures[ROCK_TXT].width + cylindrical_x - (column * state.tile_size - (i32)camera.x)];
+      const u16 texture_pixel = texture.pixels[(cylindrical_y - (row * state.tile_size - (i32)camera.y)) *
+                                texture.width + cylindrical_x - (column * state.tile_size - (i32)camera.x)];
 
       if (texture_pixel != 0x0000) solid = 1;
-      if (solid == 1 && texture_pixel == 0x0000) break;
+      if (solid == 1 && texture_pixel == 0x0000) 
+      {
+        switch(c)
+        {
+          case 'g':
+          case 'f': free(texture.pixels); texture.pixels = NULL; break;
+          default: break;
+        }
+        break;
+      }
 
       // add da pixel color
       state.pixels[pixels_index] &= 0xFFF0;
       state.pixels[pixels_index] += (u16)(15.0f * (1.0f - (f32)r / radius));
+
+      switch(c)
+      {
+        case 'g':
+        case 'f': free(texture.pixels); texture.pixels = NULL; break;
+        default: break;
+      }
     }
   }
 }
@@ -70,6 +89,72 @@ void glow(const i32 x, const i32 y, const u32 type)
 
       state.pixels[pixels_index] &= 0xFFF0;
       state.pixels[pixels_index] += alpha;
+    }
+  }
+}
+
+/* TODO: make sun_shadows change with dir */
+void sun_shadows(const veci2 dir)
+{
+  for (u32 i = 0; i < SCREEN_WIDTH; i++)
+  {
+    for (u32 j = 0; j < SCREEN_HEIGHT; j++)
+    {
+      const i32 x = i + state.camera.x;
+      const i32 y = j + state.camera.y;
+
+      const u32 column = x / state.tile_size;
+      const u32 row = y / state.tile_size;
+
+      const char c = get_type(column, row);
+      texture_t texture;
+
+      switch (c)
+      {
+        case 'R': texture = textures[ROCK_TXT]; break;
+        case 'G': texture = textures[GIRL_TXT]; break;
+        case 'g': texture = animator_texture(GRASS_ANIM); break;
+        case 'f': texture = animator_texture(FLOWER_ANIM); break;
+        default: texture = textures[BLANK_TXT]; break;
+      }
+
+      const u16 texture_pixel = texture.pixels[(y - (row * state.tile_size - (i32)state.camera.y)) *
+                               texture.width + x - (column * state.tile_size - (i32)state.camera.x)];
+
+      const u32 shadow_y_offset = 2 * (texture.height - j % texture.height) - 1;
+
+      const u32 pixels_index = (j + shadow_y_offset) * SCREEN_WIDTH + i;
+      if (texture_pixel == 0x0000)
+      {
+        // real stupid but I gotta do it
+        switch(c)
+        {
+          case 'g':
+          case 'f': free(texture.pixels); texture.pixels = NULL; break;
+          default: break;
+        }
+        continue;
+      }
+      if (!is_valid_pixel(pixels_index, i, j + shadow_y_offset))
+      {
+        switch(c)
+        {
+          case 'g':
+          case 'f': free(texture.pixels); texture.pixels = NULL; break;
+          default: break;
+        }
+        continue;
+      }
+
+      state.pixels[pixels_index] &= 0xFFF0;
+      state.pixels[pixels_index] += 0x0008;
+
+      switch(c)
+      {
+        case 'g':
+        case 'f': free(texture.pixels); texture.pixels = NULL; break;
+        default: break;
+      }
     }
   }
 }

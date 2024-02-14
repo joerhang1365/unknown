@@ -12,8 +12,8 @@
 #define MAP_SIZE 9
 #define SCREEN_TILES SCREEN_WIDTH / state.tile_size
 
-u32 map_index;
 char *map_src[MAP_SIZE];
+u32 map_index;
 
 particle_sim_t player_float_sim;
 particle_sim_t rain_sim;
@@ -45,17 +45,16 @@ static void initialize()
   /* map */
   map_index = 0;
 
-  map_src[0] = "maps/test.map";
-  map_src[1] = "maps/start.map";
-  map_src[2] = "maps/button.map";
-  map_src[3] = "maps/frbegin.map";
-  map_src[4] = "maps/flower.map";
-  map_src[5] = "maps/big.map";
-  map_src[6] = "maps/meeting.map";
-  map_src[7] = "maps/corruption.map";
-  map_src[8] = "maps/restart.map";
+  for (u32 i = 0; i < MAP_SIZE; i++)
+  {
+    size_t bytes = snprintf(NULL, 0, "maps/%u.map", i) + 1;
+    if (map_src[i] == NULL)
+      map_src[i] = malloc(bytes);
+    ASSERT(map_src[i] == NULL, "error allocating memory to map\n");
+    snprintf(map_src[i], bytes, "maps/%u.map", i); 
+  }
 
-  state_load(map_src[map_index]);
+  state_load(map_src[0]);
   player_load();
 
   /* particles */
@@ -255,7 +254,9 @@ static void render()
   /* lighting */
   switch (state.light)
   {
-    case LIGHT: break;
+    case LIGHT: 
+      sun_shadows(veci2_create(0, 0)); 
+      break;
     case DARK:
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
       light_source(player.pos.x + PLAYER_WIDTH_2,
@@ -279,6 +280,8 @@ static void render()
           }
         }
       }
+      break;
+    default: break;
   }
 
   /* girl */
@@ -323,6 +326,12 @@ static void render()
 
 static void destroy()
 {
+  for (u32 i = 0; i < MAP_SIZE; i++)
+  {
+    free(map_src[i]);
+    map_src[i] = NULL;
+  }
+
   texture_destroy(PLAYER_TXT);
   texture_destroy(TILE_TXT);
   texture_destroy(BLANK_TXT);

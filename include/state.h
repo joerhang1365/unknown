@@ -49,6 +49,15 @@ void state_destroy();
 
 static inline char get_type(const u32 column, const u32 row)
 {
+  if (column > state.columns || 
+      column < 0 ||
+      row > state.rows ||
+      row < 0)
+  {
+    printf("out of index for map\n");
+    return '\0';
+  }
+
   return state.map[row * state.columns + column];
 }
 
