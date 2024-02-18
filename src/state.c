@@ -2,9 +2,30 @@
 
 state_t state;
 
-void state_load(const char *source) 
+void maps_create()
 {
-  FILE *in = fopen(source, "r");
+  for (u32 i = 0; i < MAP_SIZE; i++)
+  {
+    size_t bytes = snprintf(NULL, 0, "maps/%u.map", i) + 1;
+    if (state.map_src[i] == NULL)
+      state.map_src[i] = malloc(bytes);
+    ASSERT(state.map_src[i] == NULL, "error allocating memory to map\n");
+    snprintf(state.map_src[i], bytes, "maps/%u.map", i); 
+  }
+}
+
+void maps_destroy()
+{
+  for (u32 i = 0; i < MAP_SIZE; i++)
+  {
+    free(state.map_src[i]);
+    state.map_src[i] = NULL;
+  }
+}
+
+void state_load() 
+{
+  FILE *in = fopen(state.map_src[state.map_index], "r");
   ASSERT(in == NULL, "cannot open file in tilemap\n");
 
   fscanf(in, "columns=%u\n", &state.columns);
@@ -89,6 +110,9 @@ void state_destroy()
   state.text_show = 0;
   state.key = 0;
   state.button = 0;
+  state.map_index = 0;
+
+  maps_destroy();
 
   for (u32 i = 0; i < SCREEN_MAX; i++) 
   {

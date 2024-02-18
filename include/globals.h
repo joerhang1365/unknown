@@ -19,10 +19,13 @@
 
 #define PI 3.1415926535
 #define PI2 PI * 2
+#define PI_2 PI / 2
 
 typedef int16_t  i16;
 typedef uint16_t u16;
 typedef int32_t  i32;
+typedef int64_t  i64;
+typedef uint64_t u64;
 typedef uint32_t u32;
 typedef float    f32;
 typedef double   f64;
@@ -116,9 +119,9 @@ static inline byte is_valid_pixel(const u32 index, const i32 x, const i32 y)
 
 enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
 
-extern f32 TIME;
-extern f32 FRAME_TIME;
-extern f32 DELTA_TIME;
+extern f64 TIME;
+extern f64 FRAME_TIME;
+extern f64 DELTA_TIME;
 extern u32 PREVIOUS_TIME;
 extern u32 CURRENT_TIME;
 

@@ -3,7 +3,7 @@
 #include "texture.h"
 
 void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
-          const u32 accuracy, const camera_t camera)
+          const u32 accuracy)
 {
   // add flicker to light
   if ((u32)TIME % 2 == 0) radius += flicker; 
@@ -14,8 +14,8 @@ void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
 
     for (u32 r = 0; r < radius; r++) 
     {
-      const i32 cylindrical_x = r * cosf(theta) + x - camera.x;
-      const i32 cylindrical_y = r * sinf(theta) + y - camera.y;
+      const i32 cylindrical_x = r * cosf(theta) + x - state.camera.x;
+      const i32 cylindrical_y = r * sinf(theta) + y - state.camera.y;
       const i32 pixels_index = cylindrical_y * SCREEN_WIDTH + cylindrical_x;
   
       // is in screen boundary
@@ -23,8 +23,8 @@ void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
 
       // check if type is solid
       // if so wait until type is no longer solid then break
-      const u32 column = (f32)(cylindrical_x + camera.x) / state.tile_size;
-      const u32 row = (f32)(cylindrical_y + camera.y) / state.tile_size;
+      const u32 column = (f32)(cylindrical_x + state.camera.x) / state.tile_size;
+      const u32 row = (f32)(cylindrical_y + state.camera.y) / state.tile_size;
 
       // making shadows pixel accurate and shit
       texture_t texture;
@@ -33,14 +33,14 @@ void light_source(const i32 x, const i32 y, u32 radius, const u32 flicker,
       {
         case 'R': texture = textures[ROCK_TXT]; break;
         case 'G': texture = textures[GIRL_TXT]; break;
-        case 'g': texture = animations[GRASS_ANIM].textures[animations[GRASS_ANIM].index]; break;
-        case 'f': texture = animations[FLOWER_ANIM].textures[animations[FLOWER_ANIM].index];; break;
+        //case 'g': texture = animations[GRASS_ANIM].textures[animations[GRASS_ANIM].index]; break;
+        //case 'f': texture = animations[FLOWER_ANIM].textures[animations[FLOWER_ANIM].index];; break;
         default: texture = textures[BLANK_TXT]; break;
       }
 
       const u16 texture_pixel = 
-        texture.pixels[(cylindrical_y - (row * state.tile_size - (i32)camera.y)) *
-        texture.width + cylindrical_x - (column * state.tile_size - (i32)camera.x)];
+        texture.pixels[(cylindrical_y - (row * state.tile_size - (i32)state.camera.y)) *
+        texture.width + cylindrical_x - (column * state.tile_size - (i32)state.camera.x)];
 
       if (texture_pixel != 0x0000) solid = 1;
       if (solid == 1 && texture_pixel == 0x0000) break;

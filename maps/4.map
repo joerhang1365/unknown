@@ -3,7 +3,7 @@ rows=16
 tile_size=8
 background_color=080F
 light=0
-weather=0
+weather=2
 girl_show=0
 "           g    "
 "     R          "

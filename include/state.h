@@ -5,6 +5,8 @@
 #include "text.h"
 #include "camera.h"
 
+#define MAP_SIZE 9
+
 typedef struct 
 {
   SDL_Window *window;
@@ -19,6 +21,8 @@ typedef struct
   byte button;
 
   /* map */
+  char *map_src[MAP_SIZE];
+  u32 map_index;
   u32 columns;
   u32 rows;
   u32 tile_size;
@@ -41,10 +45,12 @@ typedef struct
 
 extern state_t state;
 
-enum WEATHER { CLEAR, RAIN }; 
+enum WEATHER { CLEAR, RAIN, WIND }; 
 enum LIGHT { LIGHT, DARK };
 
-void state_load(const char *source);
+void maps_create();
+void maps_destroy();
+void state_load();
 void state_destroy();
 
 static inline char get_type(const u32 column, const u32 row)

@@ -9,15 +9,11 @@
 #include "texture.h"
 #include "camera.h"
 
-#define MAP_SIZE 9
 #define SCREEN_TILES SCREEN_WIDTH / state.tile_size
-
-char *map_src[MAP_SIZE];
-u32 map_index;
 
 particle_sim_t player_float_sim;
 particle_sim_t rain_sim;
-veci2 rain_dir;
+particle_sim_t wind_sim;
 
 corruption_t corruption;
 
@@ -33,7 +29,8 @@ static void initialize()
 
   /* renderer */
   state.renderer = SDL_CreateRenderer(state.window, -1, 
-                                      SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+                                      SDL_RENDERER_ACCELERATED | 
+                                      SDL_RENDERER_PRESENTVSYNC);
   ASSERT(state.renderer == NULL, "failed to create renderer\n");
 
   /* texture */
@@ -43,31 +40,21 @@ static void initialize()
   ASSERT(state.texture == NULL, "failed to create texture\n");
 
   /* map */
-  map_index = 0;
-
-  for (u32 i = 0; i < MAP_SIZE; i++)
-  {
-    size_t bytes = snprintf(NULL, 0, "maps/%u.map", i) + 1;
-    if (map_src[i] == NULL)
-      map_src[i] = malloc(bytes);
-    ASSERT(map_src[i] == NULL, "error allocating memory to map\n");
-    snprintf(map_src[i], bytes, "maps/%u.map", i); 
-  }
-
-  state_load(map_src[0]);
+  maps_create();
+  state_load();
   player_load();
 
   /* particles */
   particle_sim_create(&player_float_sim, 16);
   particle_sim_create(&rain_sim, 128);
-  rain_dir = veci2_create(-1, 1);
+  particle_sim_create(&wind_sim, 128);
 
   /* corruption */
-  corruption.corrupts = NULL;
+  //corruption.corrupts = NULL;
   corrupt_load(&corruption);
 
   /* font */
-  state.font.data = NULL; // need this for sum reason
+  //state.font.data = NULL; // need this for sum reason
   font_create(&state.font, 0xFFFF, "font_data");
 
   /* textures */
@@ -119,8 +106,8 @@ static void key_input(SDL_Event event)
 
 static void next(const u32 index)
 {
-  map_index = index;
-  state_load(map_src[index]);
+  state.map_index = index;
+  state_load();
   player_load();
   corrupt_load(&corruption);
 }
@@ -138,8 +125,8 @@ static void debug(const u32 key)
   switch (key)
   {
     case ONE: printf("enter map index: ");
-              scanf("%u", &map_index);
-              next(map_index);
+              scanf("%u", &state.map_index);
+              next(state.map_index);
   }
 }
 
@@ -160,7 +147,7 @@ static void update()
     state.button = 1;
   /* next map */
   else if (is_tile(player.pos.x, player.pos.y, player.width, player.height, '>')) 
-    next(++map_index);
+    next(++state.map_index);
   /* corruption */
   else if (is_tile(player.pos.x, player.pos.y, player.width, player.height, 'C')) 
     next(2);
@@ -185,7 +172,8 @@ static void update()
 
   /* particle */
   particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
-  particle_rain(&rain_sim, state.camera.x, state.camera.y, rain_dir, 0.1f);
+  particle_rain(&rain_sim, state.camera.x, state.camera.y, veci2_create(-1, 1), 0.1f);
+  particle_wind(&wind_sim, veci2_create(1, 0), 0.01f);
 
   //camera_update();
   camera_follow(player.pos, 8, 4, &state.camera);
@@ -247,7 +235,8 @@ static void render()
   switch (state.weather)
   {
     case CLEAR: break;
-    case RAIN: particle_render(&rain_sim, 0x008F, state.camera); break;
+    case RAIN: particle_render(&rain_sim, 0x008F); break;
+    case WIND: particle_render(&wind_sim, 0xFFFF); break;
     default: break;
   } 
 
@@ -261,7 +250,7 @@ static void render()
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
       light_source(player.pos.x + PLAYER_WIDTH_2,
             player.pos.y + PLAYER_HEIGHT_2,
-            32, 2, 360, state.camera);
+            32, 2, 360);
 
       /* glowy tiles */
       for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
@@ -290,7 +279,7 @@ static void render()
                                       GIRL_TXT);
 
   /* player */
-  particle_render(&player_float_sim, 0x00FF, state.camera);
+  particle_render(&player_float_sim, 0x00FF);
   animator_render(player.pos.x - state.camera.x, player.pos.y - state.camera.y, 
                   PLAYER_ANIM);
  
@@ -326,12 +315,6 @@ static void render()
 
 static void destroy()
 {
-  for (u32 i = 0; i < MAP_SIZE; i++)
-  {
-    free(map_src[i]);
-    map_src[i] = NULL;
-  }
-
   for (u32 i = 0; i < TEXTURE_MAX; i++)
   {
     texture_destroy(i);
