@@ -172,7 +172,7 @@ static void update()
 
   /* particle */
   particle_float(&player_float_sim, player.pos.x, player.pos.y, 0.1f);
-  particle_rain(&rain_sim, state.camera.x, state.camera.y, veci2_create(-1, 1), 0.1f);
+  particle_rain(&rain_sim, state.camera.x, state.camera.y, veci2_create(0, 1), 0.01f);
   particle_wind(&wind_sim, veci2_create(1, 0), 0.01f);
 
   //camera_update();

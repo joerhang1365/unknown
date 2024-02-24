@@ -42,7 +42,7 @@ void particle_float(particle_sim_t *sim, const i32 x, const i32 y,
   if (TIME - float_update_time < update_time) return;
   
   float_update_time = TIME;
-  particle_add(sim, x + rand() % state.tile_size, y);
+  particle_add(sim, x + rand() % state.tile_size + 1, y);
 
   // update current particles upward
   for (u32 i = 0; i < sim->size; i++) 
@@ -58,7 +58,11 @@ void particle_rain(particle_sim_t *sim, const i32 x, const i32 y, const veci2 di
   if (TIME - rain_update_time < update_time) return;
   
   rain_update_time = TIME;
-  particle_add(sim, x + rand() % SCREEN_WIDTH - SCREEN_WIDTH_2 * dir.x, y);
+
+  u32 rain_x = x + rand() % (SCREEN_WIDTH * 2) + 1 - SCREEN_WIDTH_2;
+  rain_x -= SCREEN_WIDTH_2 * dir.x;
+
+  particle_add(sim, rain_x, y);
 
   // make rain movement
   for (u32 i = 0; i < sim->size; i++)
@@ -74,24 +78,27 @@ static u32 wind_y = 0;
 
 void particle_wind(particle_sim_t *sim, const veci2 dir, const f32 update_time)
 {
-  if (TIME - wind_update_time < update_time) return;
+  if (TIME - wind_update_time < (double) update_time) return;
 
   wind_update_time = TIME;
 
   if (wind_line_count > 16)
   {
-    wind_y = rand() % SCREEN_HEIGHT - 1;
+    wind_y = rand() % (SCREEN_HEIGHT * 2) + 1 - SCREEN_HEIGHT_2;
+    wind_y -= SCREEN_HEIGHT_2 * dir.y;
     wind_line_count = 0;
   }
 
-  particle_add(sim, 0, wind_y);
+  particle_add(sim, (dir.x > 0) ? 0: SCREEN_WIDTH, wind_y);
   wind_line_count++;
 
   // main movement
+  f32 wind_theta = 0;
   for (u32 i = 0; i < sim->size; i++)
   {
     sim->particles[i].x += dir.x;
-    sim->particles[i].y += dir.y + round(sin(TIME - i / PI2));
+    sim->particles[i].y += dir.y + roundf(sinf(wind_theta));
+    wind_theta += PI / 4;
   }
 }
 
