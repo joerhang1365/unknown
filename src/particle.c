@@ -42,7 +42,8 @@ void particle_float(particle_sim_t *sim, const i32 x, const i32 y,
   if (TIME - float_update_time < update_time) return;
   
   float_update_time = TIME;
-  particle_add(sim, x + rand() % state.tile_size + 1, y);
+  u32 float_x = x + rand() % state.tile_size + 1;
+  particle_add(sim, float_x, y);
 
   // update current particles upward
   for (u32 i = 0; i < sim->size; i++) 

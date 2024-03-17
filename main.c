@@ -8,6 +8,7 @@
 #include "text.h"
 #include "texture.h"
 #include "camera.h"
+#include "audio.h"
 
 #define SCREEN_TILES SCREEN_WIDTH / state.tile_size
 
@@ -20,6 +21,7 @@ corruption_t corruption;
 static void initialize()
 {
   ASSERT(SDL_Init(SDL_INIT_VIDEO) > 0, "failed to initialize video\n");
+  ASSERT(SDL_Init(SDL_INIT_AUDIO) > 0, "failed to initialize audio\n");
 
   /* window */
   state.window = SDL_CreateWindow("unknown", SDL_WINDOWPOS_CENTERED,
@@ -39,6 +41,7 @@ static void initialize()
                                     SCREEN_HEIGHT);
   ASSERT(state.texture == NULL, "failed to create texture\n");
 
+  initAudio();
   /* map */
   maps_create();
   state_load();
@@ -79,6 +82,8 @@ static void initialize()
   animator_create(8, 8, 2, FLOWER_ANIM, FLOWER_TXT);
   animator_create(8, 8, 2, WATER_ANIM, WATER_TXT);
   animator_create(8, 8, 2, BUTTON_ANIM, BUTTON_TXT);
+
+  playMusic("audio/steverip.wav", 10);
 }
 
 static void key_input(SDL_Event event)
@@ -329,6 +334,7 @@ static void destroy()
   corrupt_destroy(&corruption);
   particle_sim_destroy(&player_float_sim);
   particle_sim_destroy(&rain_sim);
+  endAudio();
   SDL_Quit();
 }
 
