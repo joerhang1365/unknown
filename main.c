@@ -83,7 +83,7 @@ static void initialize()
   animator_create(8, 8, 2, WATER_ANIM, WATER_TXT);
   animator_create(8, 8, 2, BUTTON_ANIM, BUTTON_TXT);
 
-  playMusic("audio/steverip.wav", 10);
+  playMusic("audio/drowning.wav", 10);
 }
 
 static void key_input(SDL_Event event)

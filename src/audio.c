@@ -43,7 +43,7 @@
 #define AUDIO_CHANNELS 2
 
 /* Specifies a unit of audio data to be used at a time. Must be a power of 2 */
-#define AUDIO_SAMPLES 4096
+#define AUDIO_SAMPLES 16384
 
 /* Max number of sounds that can be in the audio queue at anytime, stops too much mixing */
 #define AUDIO_MAX_SOUNDS 25
