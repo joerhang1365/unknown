@@ -14,8 +14,7 @@ void texture_create(const char *source, const u32 type)
   if (textures[type].pixels != NULL)
     free(textures[type].pixels);
 
-  textures[type].pixels = malloc(sizeof(u16) * 
-                            textures[type].width * textures[type].height);
+  textures[type].pixels = (u16*)malloc(sizeof(u16) * textures[type].width * textures[type].height);
   ASSERT(textures[type].pixels == NULL, "error allocating memory to pixels\n");
 
   u32 buffer;
@@ -51,5 +50,6 @@ void texture_destroy(const u32 type)
 {
   if (textures[type].pixels != NULL) 
     free(textures[type].pixels);
+
   textures[type].pixels = NULL;
 }

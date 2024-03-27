@@ -6,7 +6,8 @@ void particle_sim_create(particle_sim_t *sim, u32 capacity)
   if (sim->particles != NULL)
     free(sim->particles);
 
-  sim->particles = malloc(sizeof(particle_t) * capacity);
+  sim->particles = (particle_t*)malloc(sizeof(particle_t) * capacity);
+  ASSERT(sim->particles == NULL, "error allocating memory for particles\n");
   sim->size = 0;
   sim->capacity = capacity;
 }
@@ -106,6 +107,5 @@ void particle_wind(particle_sim_t *sim, const veci2 dir, const f32 update_time)
 void particle_sim_destroy(particle_sim_t *sim) 
 {
   if (sim->particles != NULL) free(sim->particles);
-  sim->size = 0;
-  sim->capacity = 0;
+  sim->particles = NULL;
 }

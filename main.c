@@ -330,10 +330,13 @@ static void destroy()
     animator_destroy(i);
   }
 
+  maps_destroy();
   state_destroy();
   corrupt_destroy(&corruption);
   particle_sim_destroy(&player_float_sim);
   particle_sim_destroy(&rain_sim);
+  particle_sim_destroy(&wind_sim);
+  font_destroy(&state.font);
   endAudio();
   SDL_Quit();
 }
