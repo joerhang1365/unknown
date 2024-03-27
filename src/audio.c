@@ -49,7 +49,7 @@
 #define AUDIO_MAX_SOUNDS 25
 
 /* The rate at which the volume fades when musics transition. The higher number indicates music fading faster */
-#define AUDIO_MUSIC_FADE_VALUE 2
+#define AUDIO_MUSIC_FADE_VALUE 0
 
 /* Flags OR'd together, which specify how SDL should behave when a device cannot offer a specific feature
  * If flag is set, SDL will change the format in the actual audio file structure (as opposed to gDevice->want)
