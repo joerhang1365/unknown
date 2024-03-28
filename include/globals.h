@@ -14,7 +14,7 @@
 #define SCREEN_WIDTH_2 SCREEN_WIDTH / 2
 #define SCREEN_HEIGHT_2 SCREEN_HEIGHT / 2
 #define SCREEN_MAX SCREEN_WIDTH * SCREEN_HEIGHT
-#define SCALE 6
+#define SCALE 7
 #define FRAMERATE 24
 
 #define PI 3.1415926535
@@ -117,7 +117,7 @@ static inline byte is_valid_pixel(const u32 index, const i32 x, const i32 y)
          y >= 0 && y < SCREEN_HEIGHT;
 }
 
-enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, F1};
+enum KEYS { NONE, LEFT, RIGHT, UP, DOWN, X, ONE, TWO, THREE, F1};
 
 extern f64 TIME;
 extern f64 FRAME_TIME;

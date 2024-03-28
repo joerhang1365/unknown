@@ -100,6 +100,7 @@ static void key_input(SDL_Event event)
         case SDLK_DOWN: state.key = DOWN; break;
         case SDLK_x: state.key = X; break;
         case SDLK_1: state.key = ONE; break;
+        case SDLK_2: state.key = TWO; break;
         case SDLK_F1: state.key = F1; break;
         default: break;
       }
@@ -123,6 +124,9 @@ static void debug(const u32 key)
   {
     state.debug = 1;
     printf("debuging mode activated\n");
+    printf("change map      (1)\n");
+    printf("change lighting (2)\n");
+    printf("change weather  (3)\n");
   }
 
   if (state.debug != 1) return;
@@ -131,7 +135,11 @@ static void debug(const u32 key)
   {
     case ONE: printf("enter map index: ");
               scanf("%u", &state.map_index);
-              next(state.map_index);
+              next(state.map_index); break;
+    case TWO: printf("enter lighting (LIGHT = 0; DARK = 1;): ");
+              scanf("%u", &state.light); break;
+    case THREE: printf("enter weather (CLEAR = 0; RAIN = 1; WIND = 2;): ");
+                scanf("%u", &state.weather); break;
   }
 }
 
@@ -239,7 +247,6 @@ static void render()
   /* weather */
   switch (state.weather)
   {
-    case CLEAR: break;
     case RAIN: particle_render(&rain_sim, 0x008F); break;
     case WIND: particle_render(&wind_sim, 0xFFFF); break;
     default: break;
@@ -248,14 +255,12 @@ static void render()
   /* lighting */
   switch (state.light)
   {
-    case LIGHT: 
-      sun_shadows(veci2_create(0, 0)); 
-      break;
-    case DARK:
+    case LIGHT: sun_shadows(veci2_create(0, 0)); break;
+    case DARK: 
       ALPHA_SET(state.pixels, SCREEN_MAX, 0);
       light_source(player.pos.x + PLAYER_WIDTH_2,
             player.pos.y + PLAYER_HEIGHT_2,
-            32, 2, 360);
+            62, 2, 720);
 
       /* glowy tiles */
       for (u32 i = camera_column; i < camera_column + SCREEN_TILES; i++) 
@@ -307,7 +312,7 @@ static void render()
 
   for (u32 i = 0; i < SCREEN_HEIGHT; i++) 
   {
-    for (u32 j = 0; j < SCALE - 1; j++) 
+    for (u32 j = 0; j < SCALE - 4; j++) 
     {
       SDL_RenderDrawLine(state.renderer, 0, i * SCALE + j,
                         SCREEN_WIDTH * SCALE, i * SCALE + j);
