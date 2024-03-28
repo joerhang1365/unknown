@@ -10,7 +10,7 @@ void animator_create(const u32 width, const u32 height,
   if (animations[type].textures != NULL)
     free(animations[type].textures);
 
-  animations[type].textures = malloc(sizeof(texture_t) * number_of_frames);
+  animations[type].textures = (texture_t*)malloc(sizeof(texture_t) * number_of_frames);
   ASSERT(animations[type].textures == NULL, "error allocating memory to animation textures\n");
 
   for (u32 i = 0; i < number_of_frames; i++)
@@ -18,7 +18,7 @@ void animator_create(const u32 width, const u32 height,
     //if (animations[type].textures[i].pixels != NULL)
     //  free(animations[type].textures[i].pixels);
 
-    animations[type].textures[i].pixels = malloc(sizeof(u16) * width * height);
+    animations[type].textures[i].pixels = (u16*)malloc(sizeof(u16) * width * height);
     ASSERT(animations[type].textures[i].pixels == NULL, "error allocating memory to animation textures pixels\n");
 
     animations[type].textures[i].width = width;
@@ -30,8 +30,7 @@ void animator_create(const u32 width, const u32 height,
       for (u32 k = 0; k < width; k++)
       {
         const u32 pixels_index = j * width + k;
-        const u32 animator_index = j * textures[text_type].width + k +
-                                   width * i;
+        const u32 animator_index = j * textures[text_type].width + k + width * i;
         const u16 animator_pixel = textures[text_type].pixels[animator_index];
 
         animations[type].textures[i].pixels[pixels_index] = animator_pixel;
@@ -87,19 +86,11 @@ void animator_destroy(const u32 type)
     if (animations[type].textures[i].pixels != NULL)
       free(animations[type].textures[i].pixels);
 
-    animations[type].textures[i].width = 0;
-    animations[type].textures[i].height = 0;
-    animations[type].textures[i].bytes_per_pixel = 0;
+    animations[type].textures[i].pixels = NULL;
   }
 
   if (animations[type].textures != NULL)
-    free(animations[type].textures);
-  
-  animations[type].textures = NULL;
-  animations[type].index = 0;
-  animations[type].height = 0;
-  animations[type].width = 0;
-  animations[type].number_of_frames = 0;
-  animations[type].frame = 0;
+    free(animations[type].textures); 
 
+  animations[type].textures = NULL;
 }

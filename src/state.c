@@ -6,9 +6,11 @@ void maps_create()
 {
   for (u32 i = 0; i < MAP_SIZE; i++)
   {
+    if (state.map_src[i] != NULL)
+      free(state.map_src[i]);
+
     size_t bytes = snprintf(NULL, 0, "maps/%u.map", i) + 1;
-    if (state.map_src[i] == NULL)
-      state.map_src[i] = malloc(bytes);
+    state.map_src[i] = (char*)malloc(bytes);
     ASSERT(state.map_src[i] == NULL, "error allocating memory to map\n");
     snprintf(state.map_src[i], bytes, "maps/%u.map", i); 
   }
@@ -38,7 +40,7 @@ void state_load()
 
   /* map */
   if (state.map != NULL) free(state.map);
-  state.map = malloc(sizeof(char) * state.columns * state.rows);
+  state.map = (char*)malloc(sizeof(char) * state.columns * state.rows);
   ASSERT(state.map == NULL, "error allocating memory to map\n");
 
   char buffer[128];
@@ -60,7 +62,7 @@ void state_load()
   /* text */
   if (state.texts != NULL) free(state.texts);
   fscanf(in, "text_size=%u\n", &state.text_size);
-  state.texts = malloc(sizeof(text_t) * state.text_size);
+  state.texts = (text_t*)malloc(sizeof(text_t) * state.text_size);
   ASSERT(state.texts == NULL, "failed to allocate memory to texts\n");
 
   for (u32 i = 0; i < state.text_size; i++) 
@@ -98,21 +100,6 @@ void state_destroy()
   free(state.texts);
   state.map = NULL;
   state.texts = NULL;
-  state.key = 0;
-  state.quit = 0;
-  state.debug = 0;
-  state.rows = 0;
-  state.columns = 0;
-  state.girl_show = 0;
-  state.text_size = 0;
-  state.background_color = 0;
-  state.text_index = 0;
-  state.text_show = 0;
-  state.key = 0;
-  state.button = 0;
-  state.map_index = 0;
-
-  maps_destroy();
 
   for (u32 i = 0; i < SCREEN_MAX; i++) 
   {

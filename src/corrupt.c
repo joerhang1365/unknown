@@ -10,7 +10,7 @@ void corrupt_load(corruption_t *corruption)
   }
 
   if(corruption->corrupts != NULL) free(corruption->corrupts);
-  corruption->corrupts = malloc(sizeof(corrupt_t) * count);
+  corruption->corrupts = (corrupt_t*)malloc(sizeof(corrupt_t) * count);
   ASSERT(corruption->corrupts == NULL,
          "failed to allocate memory for corrupts\n");
 
@@ -66,6 +66,6 @@ void corrupt_destroy(corruption_t *corruption)
 {
   if (corruption->corrupts != NULL)
     free(corruption->corrupts);
+  
   corruption->corrupts = NULL;
-  corruption->count = 0;
 }

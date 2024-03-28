@@ -12,7 +12,7 @@ void font_create(font_t *font, const u16 color, const char *source)
   if (font->data != NULL)
     free(font->data);
 
-  font->data = malloc(sizeof(i32) * 27 * font->height);
+  font->data = (u32*)malloc(sizeof(u32) * 27 * font->height);
   ASSERT(font->data == NULL, "failed to allocate memory to font data\n");
 
   for (u32 i = 0; i < 27 * font->height; i++) 
@@ -33,9 +33,6 @@ void font_destroy(font_t *font)
   if (font->data != NULL)
     free(font->data);
   font->data = NULL;
-  font->color = 0;
-  font->width = 0;
-  font->height = 0;
 }
 
 // this is a fucking mess
